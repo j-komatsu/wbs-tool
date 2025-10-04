@@ -324,6 +324,12 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label>親タスク</label>
+                            <select id="task-parent">
+                                <option value="">なし（最上位）</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>ストーリーポイント</label>
                             <select id="task-story-points">
                                 <option value="">-</option>
@@ -341,6 +347,8 @@
                             <label>担当者</label>
                             <input type="text" id="task-assignee">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>スプリント</label>
                             <select id="task-sprint">
@@ -412,12 +420,6 @@
     <script src="js/data-model.js"></script>
     <script src="js/wbs-manager.js"></script>
     <script src="js/gantt-renderer.js"></script>
-    <script src="js/kanban.js"></script>
-    <script src="js/backlog.js"></script>
-    <script src="js/sprint-manager.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/report-generator.js"></script>
     <script src="js/import-export.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/app.js"></script>

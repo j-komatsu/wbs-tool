@@ -32,6 +32,8 @@ const UIController = {
         document.getElementById('new-task-btn')?.addEventListener('click', () => this.showNewTaskModal());
         document.getElementById('save-btn')?.addEventListener('click', () => this.saveProject());
         document.getElementById('new-project-btn')?.addEventListener('click', () => this.createNewProject());
+        document.getElementById('export-btn')?.addEventListener('click', () => ImportExport.showExportDialog());
+        document.getElementById('import-btn')?.addEventListener('click', () => ImportExport.showImportDialog());
 
         // Search and filters
         document.getElementById('search-input')?.addEventListener('input',
@@ -361,6 +363,8 @@ const UIController = {
         document.getElementById('task-description').value = '';
         document.getElementById('task-acceptance-criteria').value = '';
 
+        this.updateParentTaskSelect();
+
         document.getElementById('task-delete-btn').style.display = 'none';
 
         document.getElementById('task-modal').classList.add('active');
@@ -388,6 +392,8 @@ const UIController = {
         document.getElementById('task-description').value = task.description || '';
         document.getElementById('task-acceptance-criteria').value = task.acceptanceCriteria || '';
 
+        this.updateParentTaskSelect(task.id, task.parentId);
+
         document.getElementById('task-delete-btn').style.display = 'inline-block';
 
         document.getElementById('task-modal').classList.add('active');
@@ -411,6 +417,8 @@ const UIController = {
             return;
         }
 
+        const parentId = document.getElementById('task-parent').value || null;
+
         const taskData = {
             name: name,
             type: document.getElementById('task-type').value,
@@ -422,7 +430,8 @@ const UIController = {
             storyPoints: parseInt(document.getElementById('task-story-points').value) || null,
             assignee: document.getElementById('task-assignee').value || null,
             description: document.getElementById('task-description').value || '',
-            acceptanceCriteria: document.getElementById('task-acceptance-criteria').value || ''
+            acceptanceCriteria: document.getElementById('task-acceptance-criteria').value || '',
+            parentId: parentId
         };
 
         if (this.currentTaskModal) {
@@ -635,5 +644,37 @@ const UIController = {
     saveSprint() {
         // MVP: Not implemented
         this.hideSprintModal();
+    },
+
+    /**
+     * Update parent task select dropdown
+     */
+    updateParentTaskSelect(currentTaskId = null, selectedParentId = null) {
+        const select = document.getElementById('task-parent');
+        if (!select) return;
+
+        const tasks = WBSManager.getTasks();
+        let html = '<option value="">なし（最上位）</option>';
+
+        // Get task hierarchy
+        const hierarchy = DataModel.getTaskHierarchy(tasks);
+
+        hierarchy.forEach(task => {
+            // Skip current task and its descendants
+            if (currentTaskId) {
+                if (task.id === currentTaskId) return;
+
+                const descendantIds = DataModel.getDescendantIds(tasks, currentTaskId);
+                if (descendantIds.includes(task.id)) return;
+            }
+
+            // Add indent for visual hierarchy
+            const indent = '　'.repeat(task.level || 0);
+            const selected = task.id === selectedParentId ? 'selected' : '';
+
+            html += `<option value="${task.id}" ${selected}>${indent}${Utils.escapeHTML(task.name)}</option>`;
+        });
+
+        select.innerHTML = html;
     }
 };
