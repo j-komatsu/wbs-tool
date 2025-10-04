@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBS Tool - Project Management</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gantt.css">
+    <link rel="stylesheet" href="css/kanban.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <h1 class="app-title">📊 WBS Tool</h1>
+            <div class="project-selector">
+                <select id="project-select" class="project-dropdown">
+                    <option value="">プロジェクトを選択...</option>
+                </select>
+                <button id="new-project-btn" class="btn-icon" title="新規プロジェクト">+</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <button id="help-btn" class="btn-icon" title="ヘルプ">?</button>
+            <button id="settings-btn" class="btn-icon" title="設定">⚙</button>
+        </div>
+    </header>
+
+    <!-- View Tabs -->
+    <nav class="view-tabs">
+        <button class="view-tab active" data-view="gantt">ガントチャート</button>
+        <button class="view-tab" data-view="kanban">カンバン</button>
+        <button class="view-tab" data-view="backlog">バックログ</button>
+        <button class="view-tab" data-view="dashboard">ダッシュボード</button>
+        <button class="view-tab" data-view="report">レポート</button>
+    </nav>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button id="new-task-btn" class="btn btn-primary">📝 新規タスク</button>
+            <button id="save-btn" class="btn">💾 保存</button>
+            <div class="btn-group">
+                <button id="export-btn" class="btn">📤 エクスポート</button>
+                <button id="export-dropdown-btn" class="btn btn-dropdown">▼</button>
+            </div>
+            <button id="import-btn" class="btn">📥 インポート</button>
+            <button id="generate-report-btn" class="btn">📄 レポート生成</button>
+        </div>
+        <div class="toolbar-right">
+            <input type="text" id="search-input" class="search-input" placeholder="検索...">
+            <select id="sprint-filter" class="filter-select">
+                <option value="">全スプリント</option>
+            </select>
+            <select id="assignee-filter" class="filter-select">
+                <option value="">全担当者</option>
+            </select>
+            <select id="status-filter" class="filter-select">
+                <option value="">全ステータス</option>
+                <option value="todo">ToDo</option>
+                <option value="in_progress">進行中</option>
+                <option value="review">レビュー</option>
+                <option value="done">完了</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Gantt View -->
+        <div id="gantt-view" class="view-container active">
+            <div class="split-view">
+                <div class="wbs-list-panel">
+                    <div class="wbs-header">
+                        <div class="wbs-col wbs-col-name">タスク名</div>
+                        <div class="wbs-col wbs-col-type">種別</div>
+                        <div class="wbs-col wbs-col-points">SP</div>
+                        <div class="wbs-col wbs-col-assignee">担当者</div>
+                        <div class="wbs-col wbs-col-start">開始日</div>
+                        <div class="wbs-col wbs-col-end">終了日</div>
+                        <div class="wbs-col wbs-col-progress">進捗</div>
+                    </div>
+                    <div id="wbs-list" class="wbs-list">
+                        <!-- Tasks will be rendered here -->
+                    </div>
+                </div>
+                <div class="gantt-chart-panel">
+                    <div id="gantt-header" class="gantt-header">
+                        <!-- Timeline header will be rendered here -->
+                    </div>
+                    <div id="gantt-canvas-container" class="gantt-canvas-container">
+                        <canvas id="gantt-canvas"></canvas>
+                        <svg id="gantt-svg" class="gantt-svg"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban View -->
+        <div id="kanban-view" class="view-container">
+            <div class="kanban-board">
+                <div class="kanban-column" data-status="todo">
+                    <div class="kanban-column-header">
+                        <h3>ToDo</h3>
+                        <span class="task-count">0</span>
+                    </div>
+                    <div class="kanban-cards" data-status="todo">
+                        <!-- Cards will be rendered here -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="in_progress">
+                    <div class="kanban-column-header">
+                        <h3>進行中</h3>
+                        <span class="task-count">0</span>
+                    </div>
+                    <div class="kanban-cards" data-status="in_progress">
+                        <!-- Cards will be rendered here -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="review">
+                    <div class="kanban-column-header">
+                        <h3>レビュー</h3>
+                        <span class="task-count">0</span>
+                    </div>
+                    <div class="kanban-cards" data-status="review">
+                        <!-- Cards will be rendered here -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="done">
+                    <div class="kanban-column-header">
+                        <h3>完了</h3>
+                        <span class="task-count">0</span>
+                    </div>
+                    <div class="kanban-cards" data-status="done">
+                        <!-- Cards will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backlog View -->
+        <div id="backlog-view" class="view-container">
+            <div class="backlog-layout">
+                <div class="sprint-panel">
+                    <div class="panel-header">
+                        <h2>スプリント</h2>
+                        <button id="new-sprint-btn" class="btn btn-small">+ 新規スプリント</button>
+                    </div>
+                    <div id="sprint-list" class="sprint-list">
+                        <!-- Sprints will be rendered here -->
+                    </div>
+                </div>
+                <div class="backlog-panel">
+                    <div class="panel-header">
+                        <h2>プロダクトバックログ</h2>
+                        <div class="backlog-stats">
+                            <span>総ポイント: <strong id="total-backlog-points">0</strong></span>
+                        </div>
+                    </div>
+                    <div id="backlog-list" class="backlog-list">
+                        <!-- Backlog items will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view-container">
+            <div class="dashboard-grid">
+                <!-- KPI Cards -->
+                <div class="dashboard-card kpi-card">
+                    <h3>プロジェクト進捗</h3>
+                    <div class="kpi-value" id="project-progress">0%</div>
+                    <div class="kpi-label">完了タスク: <span id="completed-tasks">0</span> / <span id="total-tasks">0</span></div>
+                </div>
+                <div class="dashboard-card kpi-card">
+                    <h3>現在のベロシティ</h3>
+                    <div class="kpi-value" id="current-velocity">0</div>
+                    <div class="kpi-label">SP/スプリント</div>
+                </div>
+                <div class="dashboard-card kpi-card">
+                    <h3>平均ベロシティ</h3>
+                    <div class="kpi-value" id="avg-velocity">0</div>
+                    <div class="kpi-label">過去3スプリント</div>
+                </div>
+                <div class="dashboard-card kpi-card">
+                    <h3>遅延タスク</h3>
+                    <div class="kpi-value warning" id="delayed-tasks">0</div>
+                    <div class="kpi-label">要注意</div>
+                </div>
+
+                <!-- Burndown Chart -->
+                <div class="dashboard-card chart-card">
+                    <h3>バーンダウンチャート</h3>
+                    <canvas id="burndown-chart"></canvas>
+                </div>
+
+                <!-- Velocity Chart -->
+                <div class="dashboard-card chart-card">
+                    <h3>ベロシティチャート</h3>
+                    <canvas id="velocity-chart"></canvas>
+                </div>
+
+                <!-- Status Distribution -->
+                <div class="dashboard-card chart-card">
+                    <h3>ステータス別タスク数</h3>
+                    <canvas id="status-chart"></canvas>
+                </div>
+
+                <!-- Assignee Distribution -->
+                <div class="dashboard-card chart-card">
+                    <h3>担当者別タスク数</h3>
+                    <canvas id="assignee-chart"></canvas>
+                </div>
+
+                <!-- Cumulative Flow Diagram -->
+                <div class="dashboard-card chart-card wide">
+                    <h3>累積フローダイアグラム (CFD)</h3>
+                    <canvas id="cfd-chart"></canvas>
+                </div>
+
+                <!-- Burnup Chart -->
+                <div class="dashboard-card chart-card wide">
+                    <h3>バーンアップチャート</h3>
+                    <canvas id="burnup-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report View -->
+        <div id="report-view" class="view-container">
+            <div class="report-panel">
+                <div class="report-header">
+                    <h2>進捗レポート</h2>
+                    <div class="report-actions">
+                        <select id="report-type">
+                            <option value="daily">日次レポート</option>
+                            <option value="weekly">週次レポート</option>
+                            <option value="monthly">月次レポート</option>
+                            <option value="sprint">スプリントレポート</option>
+                        </select>
+                        <button id="export-pdf-btn" class="btn">PDF出力</button>
+                        <button id="export-html-btn" class="btn">HTML出力</button>
+                    </div>
+                </div>
+                <div id="report-content" class="report-content">
+                    <!-- Report will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+        <div class="status-left">
+            <span id="save-status">最終保存: 未保存</span>
+        </div>
+        <div class="status-right">
+            <span id="sprint-info"></span>
+            <span id="task-count-info">タスク数: 0</span>
+        </div>
+    </footer>
+
+    <!-- Modal: Task Editor -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="task-modal-title">タスク編集</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="task-form">
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>タスク名 *</label>
+                            <input type="text" id="task-name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>種別</label>
+                            <select id="task-type">
+                                <option value="task">タスク</option>
+                                <option value="story">ストーリー</option>
+                                <option value="bug">バグ</option>
+                                <option value="epic">エピック</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ステータス</label>
+                            <select id="task-status">
+                                <option value="todo">ToDo</option>
+                                <option value="in_progress">進行中</option>
+                                <option value="review">レビュー</option>
+                                <option value="done">完了</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>優先度</label>
+                            <select id="task-priority">
+                                <option value="low">低</option>
+                                <option value="medium">中</option>
+                                <option value="high">高</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>開始日</label>
+                            <input type="date" id="task-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label>終了日</label>
+                            <input type="date" id="task-end-date">
+                        </div>
+                        <div class="form-group">
+                            <label>進捗率 (%)</label>
+                            <input type="number" id="task-progress" min="0" max="100" value="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>ストーリーポイント</label>
+                            <select id="task-story-points">
+                                <option value="">-</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="5">5</option>
+                                <option value="8">8</option>
+                                <option value="13">13</option>
+                                <option value="21">21</option>
+                                <option value="34">34</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>担当者</label>
+                            <input type="text" id="task-assignee">
+                        </div>
+                        <div class="form-group">
+                            <label>スプリント</label>
+                            <select id="task-sprint">
+                                <option value="">未割り当て</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>説明</label>
+                            <textarea id="task-description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>受け入れ基準</label>
+                            <textarea id="task-acceptance-criteria" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="task-delete-btn" class="btn btn-danger">削除</button>
+                <button id="task-cancel-btn" class="btn">キャンセル</button>
+                <button id="task-save-btn" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sprint Editor -->
+    <div id="sprint-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>スプリント作成</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sprint-form">
+                    <div class="form-group">
+                        <label>スプリント名 *</label>
+                        <input type="text" id="sprint-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>目標</label>
+                        <textarea id="sprint-goal" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>開始日 *</label>
+                            <input type="date" id="sprint-start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>終了日 *</label>
+                            <input type="date" id="sprint-end-date" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="sprint-cancel-btn" class="btn">キャンセル</button>
+                <button id="sprint-save-btn" class="btn btn-primary">作成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/data-model.js"></script>
+    <script src="js/wbs-manager.js"></script>
+    <script src="js/gantt-renderer.js"></script>
+    <script src="js/kanban.js"></script>
+    <script src="js/backlog.js"></script>
+    <script src="js/sprint-manager.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/report-generator.js"></script>
+    <script src="js/import-export.js"></script>
+    <script src="js/ui-controller.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

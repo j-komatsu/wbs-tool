@@ -1,0 +1,38 @@
+{
+  "name": "wbs-tool",
+  "version": "0.1.0",
+  "description": "Lightweight Web Based Work Breakdown Structure & Agile Project Management Tool",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -o",
+    "dev": "npx http-server -p 8080 -o",
+    "lint": "eslint js/**/*.js",
+    "format": "prettier --write \"**/*.{js,css,html,md}\""
+  },
+  "keywords": [
+    "wbs",
+    "gantt",
+    "project-management",
+    "agile",
+    "scrum",
+    "kanban",
+    "burndown",
+    "velocity",
+    "sprint"
+  ],
+  "author": "Created with Claude Code",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "http-server": "^14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/wbs-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/wbs-tool/issues"
+  },
+  "homepage": "https://github.com/yourusername/wbs-tool#readme"
+}

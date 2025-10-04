@@ -1,0 +1,451 @@
+/* ==========================================================================
+   Gantt Chart Styles
+   ========================================================================== */
+
+.split-view {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   WBS List Panel
+   ========================================================================== */
+
+.wbs-list-panel {
+    width: 40%;
+    min-width: 400px;
+    max-width: 600px;
+    border-right: 2px solid var(--border-dark);
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+.wbs-header {
+    display: flex;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    height: 36px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.wbs-col {
+    padding: 8px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wbs-col-name {
+    flex: 1;
+    min-width: 150px;
+}
+
+.wbs-col-type {
+    width: 80px;
+}
+
+.wbs-col-points {
+    width: 50px;
+    text-align: center;
+}
+
+.wbs-col-assignee {
+    width: 100px;
+}
+
+.wbs-col-start {
+    width: 100px;
+}
+
+.wbs-col-end {
+    width: 100px;
+}
+
+.wbs-col-progress {
+    width: 60px;
+    text-align: center;
+}
+
+.wbs-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Task Row */
+.wbs-task {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 40px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.wbs-task:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.wbs-task.selected {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.wbs-task.dragging {
+    opacity: 0.5;
+}
+
+/* Task Hierarchy */
+.wbs-task-name {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 150px;
+    gap: 4px;
+}
+
+.wbs-task-indent {
+    display: inline-block;
+    width: 20px;
+}
+
+.wbs-task-toggle {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.wbs-task-toggle:hover {
+    color: var(--text-primary);
+}
+
+.wbs-task-toggle.collapsed::before {
+    content: '▶';
+}
+
+.wbs-task-toggle.expanded::before {
+    content: '▼';
+}
+
+.wbs-task-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.wbs-task-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Task Type */
+.wbs-task-type {
+    width: 80px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.task-type-epic {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.task-type-story {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.task-type-task {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
+.task-type-bug {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Story Points */
+.wbs-task-points {
+    width: 50px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* Assignee */
+.wbs-task-assignee {
+    width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+/* Dates */
+.wbs-task-date {
+    width: 100px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Progress */
+.wbs-task-progress {
+    width: 60px;
+    text-align: center;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--success-color);
+    transition: width 0.3s;
+}
+
+.progress-bar.warning {
+    background-color: var(--warning-color);
+}
+
+.progress-bar.danger {
+    background-color: var(--danger-color);
+}
+
+/* ==========================================================================
+   Gantt Chart Panel
+   ========================================================================== */
+
+.gantt-chart-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.gantt-header {
+    height: 36px;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.gantt-timeline {
+    display: flex;
+    height: 100%;
+}
+
+.gantt-timeline-cell {
+    flex: 1;
+    min-width: 40px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.gantt-timeline-cell.today {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.gantt-timeline-cell.weekend {
+    background-color: var(--bg-hover);
+}
+
+.gantt-canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+}
+
+#gantt-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#gantt-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+/* Gantt Task Bar */
+.gantt-task-bar {
+    position: absolute;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+.gantt-task-bar:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gantt-task-bar.task-todo {
+    background-color: #94a3b8;
+}
+
+.gantt-task-bar.task-in-progress {
+    background-color: #3b82f6;
+}
+
+.gantt-task-bar.task-review {
+    background-color: #f59e0b;
+}
+
+.gantt-task-bar.task-done {
+    background-color: #10b981;
+}
+
+.gantt-task-bar.task-delayed {
+    background-color: var(--danger-color);
+}
+
+/* Progress within task bar */
+.gantt-task-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: width 0.3s;
+}
+
+/* Milestone */
+.gantt-milestone {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 12px solid transparent;
+    transform: rotate(45deg);
+    cursor: pointer;
+}
+
+.gantt-milestone.milestone-default {
+    border-bottom-color: #8b5cf6;
+}
+
+.gantt-milestone.milestone-complete {
+    border-bottom-color: var(--success-color);
+}
+
+.gantt-milestone.milestone-overdue {
+    border-bottom-color: var(--danger-color);
+}
+
+/* Inazuma Line (Lightning Line) */
+.gantt-inazuma-line {
+    stroke: #ef4444;
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 5, 5;
+}
+
+.gantt-ideal-line {
+    stroke: #94a3b8;
+    stroke-width: 1;
+    stroke-dasharray: 3, 3;
+    fill: none;
+}
+
+/* Dependencies */
+.gantt-dependency {
+    stroke: #64748b;
+    stroke-width: 1.5;
+    fill: none;
+    marker-end: url(#arrow);
+}
+
+/* Today line */
+.gantt-today-line {
+    stroke: var(--primary-color);
+    stroke-width: 2;
+    stroke-dasharray: 4, 4;
+}
+
+/* Sprint marker */
+.gantt-sprint-marker {
+    fill: rgba(37, 99, 235, 0.05);
+    stroke: var(--primary-color);
+    stroke-width: 1;
+    stroke-dasharray: 2, 2;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .wbs-list-panel {
+        width: 50%;
+        min-width: 300px;
+    }
+
+    .wbs-col-start,
+    .wbs-col-end {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .split-view {
+        flex-direction: column;
+    }
+
+    .wbs-list-panel {
+        width: 100%;
+        max-width: none;
+        border-right: none;
+        border-bottom: 2px solid var(--border-dark);
+        height: 50%;
+    }
+
+    .gantt-chart-panel {
+        height: 50%;
+    }
+}
