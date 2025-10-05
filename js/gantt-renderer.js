@@ -631,7 +631,11 @@ const GanttRenderer = {
         const points = [];
 
         this.tasks.forEach((task, index) => {
-            if (!task.startDate || !task.endDate) return;
+            if (!task.startDate || !task.endDate) {
+                // Add placeholder point for tasks without dates to maintain line continuity
+                points.push(null);
+                return;
+            }
 
             const start = new Date(task.startDate);
             const end = new Date(task.endDate);
@@ -661,6 +665,7 @@ const GanttRenderer = {
             points.push({
                 x,
                 y,
+                taskIndex: index,
                 task,
                 progress,
                 expectedProgress,
@@ -668,7 +673,10 @@ const GanttRenderer = {
             });
         });
 
-        if (points.length < 2) return;
+        // Filter out null points for drawing
+        const validPoints = points.filter(p => p !== null);
+
+        if (validPoints.length < 2) return;
 
         // Draw zigzag line (Inazuma = lightning) connecting progress points
         this.ctx.beginPath();
@@ -676,11 +684,11 @@ const GanttRenderer = {
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([5, 5]);
 
-        points.forEach((point, i) => {
+        validPoints.forEach((point, i) => {
             if (i === 0) {
                 this.ctx.moveTo(point.x, point.y);
             } else {
-                const prevPoint = points[i - 1];
+                const prevPoint = validPoints[i - 1];
                 // Draw horizontal line first, then vertical (creates zigzag)
                 this.ctx.lineTo(point.x, prevPoint.y);
                 this.ctx.lineTo(point.x, point.y);
@@ -691,7 +699,7 @@ const GanttRenderer = {
         this.ctx.setLineDash([]);
 
         // Draw points
-        points.forEach(point => {
+        validPoints.forEach(point => {
             this.ctx.beginPath();
             this.ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
             this.ctx.fillStyle = point.diff >= 0 ? '#22c55e' : '#dc2626';
