@@ -23,41 +23,71 @@
 }
 
 .kanban-column-header {
-    padding: 16px;
+    padding: 12px 16px;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--border-color);
+    border-radius: 8px 8px 0 0;
+}
+
+.kanban-column-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-}
-
-.kanban-column-header h3 {
-    font-size: 16px;
+    gap: 8px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
+    margin-bottom: 4px;
 }
 
-.task-count {
+.kanban-column-icon {
+    font-size: 18px;
+}
+
+.kanban-column-label {
+    flex: 1;
+}
+
+.kanban-column-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 24px;
-    height: 24px;
-    padding: 0 8px;
+    height: 20px;
+    padding: 0 6px;
     background-color: var(--bg-tertiary);
-    border-radius: 12px;
-    font-size: 12px;
+    border-radius: 10px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
 }
 
-.kanban-cards {
+.kanban-column-points {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.kanban-column-content {
     flex: 1;
     padding: 12px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 100px;
+}
+
+.kanban-column-content.drag-over {
+    background-color: rgba(37, 99, 235, 0.05);
+    border: 2px dashed var(--primary-color);
+    border-radius: 4px;
+}
+
+.kanban-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
 }
 
 /* Kanban Card */
@@ -66,7 +96,7 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 12px;
-    cursor: pointer;
+    cursor: move;
     transition: all 0.2s;
     box-shadow: var(--shadow-sm);
 }
@@ -74,10 +104,12 @@
 .kanban-card:hover {
     box-shadow: var(--shadow-md);
     border-color: var(--border-dark);
+    transform: translateY(-2px);
 }
 
 .kanban-card.dragging {
-    opacity: 0.5;
+    opacity: 0.4;
+    transform: rotate(2deg);
 }
 
 .kanban-card-header {
@@ -157,22 +189,18 @@
 }
 
 .kanban-card-assignee {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.kanban-card-avatar {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .kanban-card-footer {
@@ -220,21 +248,32 @@
 
 /* Progress indicator */
 .kanban-card-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-top: 8px;
 }
 
-.kanban-progress-bar {
-    width: 100%;
-    height: 4px;
+.progress-bar-container {
+    flex: 1;
+    height: 6px;
     background-color: var(--bg-tertiary);
-    border-radius: 2px;
+    border-radius: 3px;
     overflow: hidden;
 }
 
-.kanban-progress-fill {
+.progress-bar-fill {
     height: 100%;
-    background-color: var(--success-color);
-    transition: width 0.3s;
+    transition: width 0.3s, background-color 0.3s;
+    border-radius: 3px;
+}
+
+.progress-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 35px;
+    text-align: right;
 }
 
 /* Column specific colors */
@@ -254,22 +293,32 @@
     border-bottom-color: #10b981;
 }
 
-/* Drag and drop states */
-.kanban-cards.drag-over {
-    background-color: rgba(37, 99, 235, 0.1);
-    border: 2px dashed var(--primary-color);
-    border-radius: 4px;
-}
-
-/* Empty state */
-.kanban-cards-empty {
+.kanban-card-date {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 13px;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background-color: var(--bg-secondary);
+}
+
+.kanban-card-date.overdue {
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.kanban-card-date.today {
+    background-color: #fef3c7;
+    color: #d97706;
+    font-weight: 600;
+}
+
+.kanban-card-date.urgent {
+    background-color: #ffedd5;
+    color: #ea580c;
+    font-weight: 600;
 }
 
 /* WIP Limit Warning */

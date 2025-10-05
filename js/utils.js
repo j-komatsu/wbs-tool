@@ -356,6 +356,21 @@ const Utils = {
     },
 
     /**
+     * Get label for task type
+     * @param {string} type - Task type
+     * @returns {string} Japanese label
+     */
+    getTaskTypeLabel(type) {
+        const labels = {
+            epic: 'エピック',
+            story: 'ストーリー',
+            task: 'タスク',
+            bug: 'バグ'
+        };
+        return labels[type] || 'タスク';
+    },
+
+    /**
      * Get color for task type
      * @param {string} type - Task type
      * @returns {string} Color code

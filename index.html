@@ -102,43 +102,8 @@
 
         <!-- Kanban View -->
         <div id="kanban-view" class="view-container">
-            <div class="kanban-board">
-                <div class="kanban-column" data-status="todo">
-                    <div class="kanban-column-header">
-                        <h3>ToDo</h3>
-                        <span class="task-count">0</span>
-                    </div>
-                    <div class="kanban-cards" data-status="todo">
-                        <!-- Cards will be rendered here -->
-                    </div>
-                </div>
-                <div class="kanban-column" data-status="in_progress">
-                    <div class="kanban-column-header">
-                        <h3>進行中</h3>
-                        <span class="task-count">0</span>
-                    </div>
-                    <div class="kanban-cards" data-status="in_progress">
-                        <!-- Cards will be rendered here -->
-                    </div>
-                </div>
-                <div class="kanban-column" data-status="review">
-                    <div class="kanban-column-header">
-                        <h3>レビュー</h3>
-                        <span class="task-count">0</span>
-                    </div>
-                    <div class="kanban-cards" data-status="review">
-                        <!-- Cards will be rendered here -->
-                    </div>
-                </div>
-                <div class="kanban-column" data-status="done">
-                    <div class="kanban-column-header">
-                        <h3>完了</h3>
-                        <span class="task-count">0</span>
-                    </div>
-                    <div class="kanban-cards" data-status="done">
-                        <!-- Cards will be rendered here -->
-                    </div>
-                </div>
+            <div id="kanban-container">
+                <!-- Kanban board will be rendered here by kanban.js -->
             </div>
         </div>
 
@@ -420,6 +385,7 @@
     <script src="js/data-model.js"></script>
     <script src="js/wbs-manager.js"></script>
     <script src="js/gantt-renderer.js"></script>
+    <script src="js/kanban.js"></script>
     <script src="js/import-export.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/app.js"></script>

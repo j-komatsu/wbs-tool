@@ -25,6 +25,9 @@ const App = {
             // Initialize components
             UIController.init();
             GanttRenderer.init();
+            if (typeof KanbanBoard !== 'undefined') {
+                KanbanBoard.init();
+            }
 
             // Load or create project
             await this.loadInitialProject();

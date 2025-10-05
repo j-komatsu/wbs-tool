@@ -292,13 +292,13 @@ const UIController = {
     },
 
     /**
-     * Render Kanban view (placeholder for MVP)
+     * Render Kanban view
      */
     renderKanbanView() {
-        // MVP: Show message
-        const container = document.querySelector('#kanban-view .kanban-board');
-        if (container) {
-            container.innerHTML = '<div style="padding: 40px; text-align: center;">カンバンビューは開発中です</div>';
+        if (typeof KanbanBoard !== 'undefined') {
+            KanbanBoard.render();
+        } else {
+            console.error('KanbanBoard module not loaded');
         }
     },
 
