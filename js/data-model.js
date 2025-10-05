@@ -72,6 +72,7 @@ const DataModel = {
             dependencies: [],
             color: null,
             tags: [],
+            createdAt: new Date().toISOString(),
             history: []
         };
     },

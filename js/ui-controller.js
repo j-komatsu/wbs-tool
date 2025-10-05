@@ -322,21 +322,9 @@ const UIController = {
      */
     renderDashboardView() {
         const container = document.getElementById('dashboard-view');
-        if (container) {
-            this.renderDashboardKPIs();
+        if (container && typeof ChartsRenderer !== 'undefined') {
+            ChartsRenderer.renderAll();
         }
-    },
-
-    /**
-     * Render dashboard KPIs
-     */
-    renderDashboardKPIs() {
-        const stats = WBSManager.getStatistics();
-
-        document.getElementById('project-progress').textContent = `${stats.progress}%`;
-        document.getElementById('completed-tasks').textContent = stats.done;
-        document.getElementById('total-tasks').textContent = stats.total;
-        document.getElementById('delayed-tasks').textContent = stats.overdue;
     },
 
     /**

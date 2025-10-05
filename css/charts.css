@@ -26,7 +26,31 @@
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
+    margin: 0;
+}
+
+/* Chart Card Header */
+.chart-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 16px;
+}
+
+.btn-expand-chart {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    opacity: 0.6;
+}
+
+.btn-expand-chart:hover {
+    background-color: var(--bg-secondary);
+    opacity: 1;
 }
 
 /* KPI Card */
@@ -396,6 +420,29 @@
 .report-chart {
     margin-top: 20px;
     max-height: 400px;
+}
+
+/* ==========================================================================
+   Chart Expand Modal
+   ========================================================================== */
+
+.modal-large {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 1200px;
+}
+
+.modal-large .modal-body {
+    height: calc(90vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+#chart-expand-canvas {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 /* ==========================================================================

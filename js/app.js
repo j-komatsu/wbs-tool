@@ -31,6 +31,9 @@ const App = {
             if (typeof BacklogManager !== 'undefined') {
                 BacklogManager.init();
             }
+            if (typeof ChartExpander !== 'undefined') {
+                ChartExpander.init();
+            }
 
             // Load or create project
             await this.loadInitialProject();

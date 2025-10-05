@@ -142,37 +142,55 @@
 
                 <!-- Burndown Chart -->
                 <div class="dashboard-card chart-card">
-                    <h3>バーンダウンチャート</h3>
+                    <div class="chart-card-header">
+                        <h3>バーンダウンチャート</h3>
+                        <button class="btn-expand-chart" data-chart="burndown-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="burndown-chart"></canvas>
                 </div>
 
                 <!-- Velocity Chart -->
                 <div class="dashboard-card chart-card">
-                    <h3>ベロシティチャート</h3>
+                    <div class="chart-card-header">
+                        <h3>ベロシティチャート</h3>
+                        <button class="btn-expand-chart" data-chart="velocity-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="velocity-chart"></canvas>
                 </div>
 
                 <!-- Status Distribution -->
                 <div class="dashboard-card chart-card">
-                    <h3>ステータス別タスク数</h3>
+                    <div class="chart-card-header">
+                        <h3>ステータス別タスク数</h3>
+                        <button class="btn-expand-chart" data-chart="status-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="status-chart"></canvas>
                 </div>
 
                 <!-- Assignee Distribution -->
                 <div class="dashboard-card chart-card">
-                    <h3>担当者別タスク数</h3>
+                    <div class="chart-card-header">
+                        <h3>担当者別タスク数</h3>
+                        <button class="btn-expand-chart" data-chart="assignee-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="assignee-chart"></canvas>
                 </div>
 
                 <!-- Cumulative Flow Diagram -->
                 <div class="dashboard-card chart-card wide">
-                    <h3>累積フローダイアグラム (CFD)</h3>
+                    <div class="chart-card-header">
+                        <h3>累積フローダイアグラム (CFD)</h3>
+                        <button class="btn-expand-chart" data-chart="cfd-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="cfd-chart"></canvas>
                 </div>
 
                 <!-- Burnup Chart -->
                 <div class="dashboard-card chart-card wide">
-                    <h3>バーンアップチャート</h3>
+                    <div class="chart-card-header">
+                        <h3>バーンアップチャート</h3>
+                        <button class="btn-expand-chart" data-chart="burnup-chart" title="拡大表示">🔍</button>
+                    </div>
                     <canvas id="burnup-chart"></canvas>
                 </div>
             </div>
@@ -385,6 +403,19 @@
         </div>
     </div>
 
+    <!-- Chart Expand Modal -->
+    <div id="chart-expand-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="chart-expand-title">チャート</h2>
+                <button class="modal-close" onclick="ChartExpander.close()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <canvas id="chart-expand-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/storage.js"></script>
@@ -393,6 +424,7 @@
     <script src="js/gantt-renderer.js"></script>
     <script src="js/kanban.js"></script>
     <script src="js/backlog.js"></script>
+    <script src="js/charts.js"></script>
     <script src="js/import-export.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/app.js"></script>
