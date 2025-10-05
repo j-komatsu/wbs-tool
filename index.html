@@ -302,6 +302,21 @@
                                 <option value="">未割り当て</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="task-milestone">
+                                マイルストーン
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>先行タスク（依存関係）</label>
+                            <select id="task-dependencies" multiple size="3">
+                                <!-- Will be populated dynamically -->
+                            </select>
+                            <small style="color: var(--text-secondary); font-size: 11px;">複数選択可（Ctrl/Cmdキーを押しながらクリック）</small>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group full">

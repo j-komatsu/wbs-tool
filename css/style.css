@@ -481,6 +481,25 @@ body {
     min-height: 60px;
 }
 
+.form-group select[multiple] {
+    min-height: 80px;
+    padding: 4px;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+.form-group label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 400;
+    padding-top: 8px;
+}
+
 /* ==========================================================================
    Utility Classes
    ========================================================================== */

@@ -12,6 +12,7 @@ const GanttRenderer = {
     endDate: null,
     columnWidth: 40,
     rowHeight: 40,
+    headerHeight: 25, // Height for date header row
     tasks: [],
 
     /**
@@ -51,8 +52,20 @@ const GanttRenderer = {
         // Draw grid
         this.drawGrid();
 
+        // Draw date headers
+        this.drawDateHeaders();
+
         // Draw tasks
         this.drawTasks();
+
+        // Draw dependencies (arrows)
+        this.drawDependencies();
+
+        // Draw milestones
+        this.drawMilestones();
+
+        // Draw Inazuma line (progress line)
+        this.drawInazumaLine();
 
         // Draw today line
         this.drawTodayLine();
@@ -135,7 +148,7 @@ const GanttRenderer = {
         const rowCount = this.tasks.length;
 
         const width = columnCount * this.columnWidth;
-        const height = rowCount * this.rowHeight;
+        const height = this.headerHeight + rowCount * this.rowHeight;
 
         // Set canvas size
         this.canvas.width = Math.max(width, 800);
@@ -169,6 +182,10 @@ const GanttRenderer = {
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Draw header background
+        this.ctx.fillStyle = '#f1f5f9';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.headerHeight);
+
         // Draw vertical lines (columns)
         this.ctx.strokeStyle = '#e2e8f0';
         this.ctx.lineWidth = 1;
@@ -180,24 +197,89 @@ const GanttRenderer = {
             this.ctx.lineTo(x, this.canvas.height);
             this.ctx.stroke();
 
-            // Highlight weekends
+            // Highlight weekends (only in task area, not header)
             if (this.timeScale === 'day') {
                 const date = this.getDateForColumn(i);
                 if (Utils.isWeekend(date)) {
                     this.ctx.fillStyle = '#f8fafc';
-                    this.ctx.fillRect(x, 0, this.columnWidth, this.canvas.height);
+                    this.ctx.fillRect(x, this.headerHeight, this.columnWidth, this.canvas.height - this.headerHeight);
                 }
             }
         }
 
-        // Draw horizontal lines (rows)
+        // Draw header border
+        this.ctx.strokeStyle = '#cbd5e1';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, this.headerHeight);
+        this.ctx.lineTo(this.canvas.width, this.headerHeight);
+        this.ctx.stroke();
+
+        // Draw horizontal lines (rows) - start after header
+        this.ctx.strokeStyle = '#e2e8f0';
+        this.ctx.lineWidth = 1;
         for (let i = 0; i <= rowCount; i++) {
-            const y = i * this.rowHeight;
+            const y = this.headerHeight + i * this.rowHeight;
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(this.canvas.width, y);
             this.ctx.stroke();
         }
+    },
+
+    /**
+     * Draw date headers at top of chart
+     */
+    drawDateHeaders() {
+        const columnCount = this.getColumnCount();
+
+        this.ctx.save();
+        this.ctx.fillStyle = '#1e293b';
+        this.ctx.font = '11px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+
+        for (let i = 0; i < columnCount; i++) {
+            const date = this.getDateForColumn(i);
+            const x = i * this.columnWidth + this.columnWidth / 2;
+            const y = this.headerHeight / 2;
+
+            let label = '';
+            if (this.timeScale === 'day') {
+                // Show MM/DD format
+                label = `${date.getMonth() + 1}/${date.getDate()}`;
+            } else if (this.timeScale === 'week') {
+                label = `W${this.getWeekNumber(date)}`;
+            } else if (this.timeScale === 'month') {
+                label = `${date.getFullYear()}/${date.getMonth() + 1}`;
+            }
+
+            // Highlight today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (date.getTime() === today.getTime()) {
+                this.ctx.fillStyle = '#2563eb';
+                this.ctx.font = 'bold 11px sans-serif';
+            } else {
+                this.ctx.fillStyle = '#64748b';
+                this.ctx.font = '11px sans-serif';
+            }
+
+            this.ctx.fillText(label, x, y);
+        }
+
+        this.ctx.restore();
+    },
+
+    /**
+     * Get week number for a date
+     */
+    getWeekNumber(date) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     },
 
     /**
@@ -221,7 +303,7 @@ const GanttRenderer = {
         if (startCol === null || endCol === null) return;
 
         const x = startCol * this.columnWidth;
-        const y = rowIndex * this.rowHeight + 8;
+        const y = this.headerHeight + rowIndex * this.rowHeight + 8;
         const width = (endCol - startCol + 1) * this.columnWidth;
         const height = this.rowHeight - 16;
 
@@ -276,7 +358,7 @@ const GanttRenderer = {
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([4, 4]);
         this.ctx.beginPath();
-        this.ctx.moveTo(x, 0);
+        this.ctx.moveTo(x, this.headerHeight);
         this.ctx.lineTo(x, this.canvas.height);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
@@ -435,5 +517,188 @@ const GanttRenderer = {
         } else if (this.timeScale === 'week') {
             this.timeScale = 'month';
         }
+    },
+
+    /**
+     * Draw task dependencies (arrows)
+     */
+    drawDependencies() {
+        if (!this.svg) return;
+
+        // Clear existing arrows
+        this.svg.innerHTML = '';
+
+        this.tasks.forEach((task, taskIndex) => {
+            if (!task.dependencies || task.dependencies.length === 0) return;
+            if (!task.startDate) return;
+
+            task.dependencies.forEach(depId => {
+                const depTask = this.tasks.find(t => t.id === depId);
+                if (!depTask || !depTask.endDate) return;
+
+                const depTaskIndex = this.tasks.indexOf(depTask);
+                if (depTaskIndex === -1) return;
+
+                // Calculate positions
+                const depEndCol = this.getColumnForDate(new Date(depTask.endDate));
+                const taskStartCol = this.getColumnForDate(new Date(task.startDate));
+
+                const x1 = (depEndCol + 1) * this.columnWidth;
+                const y1 = this.headerHeight + (depTaskIndex + 0.5) * this.rowHeight;
+                const x2 = taskStartCol * this.columnWidth;
+                const y2 = this.headerHeight + (taskIndex + 0.5) * this.rowHeight;
+
+                // Draw arrow
+                this.drawArrow(x1, y1, x2, y2);
+            });
+        });
+    },
+
+    /**
+     * Draw an arrow between two points
+     */
+    drawArrow(x1, y1, x2, y2) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+        // Simple L-shaped arrow
+        const midX = (x1 + x2) / 2;
+        const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', '#f59e0b');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('marker-end', 'url(#arrowhead)');
+
+        this.svg.appendChild(path);
+
+        // Add arrowhead marker if not exists
+        if (!document.getElementById('arrowhead')) {
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrowhead');
+            marker.setAttribute('markerWidth', '10');
+            marker.setAttribute('markerHeight', '10');
+            marker.setAttribute('refX', '9');
+            marker.setAttribute('refY', '3');
+            marker.setAttribute('orient', 'auto');
+
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon.setAttribute('points', '0 0, 10 3, 0 6');
+            polygon.setAttribute('fill', '#f59e0b');
+
+            marker.appendChild(polygon);
+            defs.appendChild(marker);
+            this.svg.appendChild(defs);
+        }
+    },
+
+    /**
+     * Draw milestones
+     */
+    drawMilestones() {
+        this.tasks.forEach((task, index) => {
+            if (!task.isMilestone || !task.endDate) return;
+
+            const col = this.getColumnForDate(new Date(task.endDate));
+            const x = col * this.columnWidth + this.columnWidth / 2;
+            const y = this.headerHeight + index * this.rowHeight + this.rowHeight / 2;
+            const size = 12;
+
+            // Draw diamond
+            this.ctx.save();
+            this.ctx.translate(x, y);
+            this.ctx.rotate(Math.PI / 4);
+
+            this.ctx.fillStyle = '#dc2626';
+            this.ctx.fillRect(-size / 2, -size / 2, size, size);
+
+            this.ctx.strokeStyle = '#7f1d1d';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(-size / 2, -size / 2, size, size);
+
+            this.ctx.restore();
+        });
+    },
+
+    /**
+     * Draw Inazuma line (progress tracking line)
+     */
+    drawInazumaLine() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const points = [];
+
+        this.tasks.forEach((task, index) => {
+            if (!task.startDate || !task.endDate) return;
+
+            const start = new Date(task.startDate);
+            const end = new Date(task.endDate);
+            const progress = task.progress || 0;
+
+            // Calculate expected progress based on date
+            let expectedProgress = 0;
+            if (today < start) {
+                expectedProgress = 0;
+            } else if (today > end) {
+                expectedProgress = 100;
+            } else {
+                const total = end - start;
+                const elapsed = today - start;
+                expectedProgress = (elapsed / total) * 100;
+            }
+
+            // Calculate actual progress position
+            const startCol = this.getColumnForDate(start);
+            const endCol = this.getColumnForDate(end);
+            const taskDuration = endCol - startCol;
+            const progressCol = startCol + (taskDuration * progress / 100);
+
+            const x = progressCol * this.columnWidth + this.columnWidth / 2;
+            const y = this.headerHeight + index * this.rowHeight + this.rowHeight / 2;
+
+            points.push({
+                x,
+                y,
+                task,
+                progress,
+                expectedProgress,
+                diff: progress - expectedProgress
+            });
+        });
+
+        if (points.length < 2) return;
+
+        // Draw zigzag line (Inazuma = lightning) connecting progress points
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = '#dc2626';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]);
+
+        points.forEach((point, i) => {
+            if (i === 0) {
+                this.ctx.moveTo(point.x, point.y);
+            } else {
+                const prevPoint = points[i - 1];
+                // Draw horizontal line first, then vertical (creates zigzag)
+                this.ctx.lineTo(point.x, prevPoint.y);
+                this.ctx.lineTo(point.x, point.y);
+            }
+        });
+
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+
+        // Draw points
+        points.forEach(point => {
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+            this.ctx.fillStyle = point.diff >= 0 ? '#22c55e' : '#dc2626';
+            this.ctx.fill();
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+        });
     }
 };

@@ -367,9 +367,11 @@ const UIController = {
         document.getElementById('task-assignee').value = '';
         document.getElementById('task-description').value = '';
         document.getElementById('task-acceptance-criteria').value = '';
+        document.getElementById('task-milestone').checked = false;
 
         this.updateParentTaskSelect();
         this.updateSprintSelect();
+        this.updateDependenciesSelect();
 
         document.getElementById('task-delete-btn').style.display = 'none';
 
@@ -397,9 +399,11 @@ const UIController = {
         document.getElementById('task-assignee').value = task.assignee || '';
         document.getElementById('task-description').value = task.description || '';
         document.getElementById('task-acceptance-criteria').value = task.acceptanceCriteria || '';
+        document.getElementById('task-milestone').checked = task.isMilestone || false;
 
         this.updateParentTaskSelect(task.id, task.parentId);
         this.updateSprintSelect(task.sprintId);
+        this.updateDependenciesSelect(task.id, task.dependencies);
 
         document.getElementById('task-delete-btn').style.display = 'inline-block';
 
@@ -428,6 +432,11 @@ const UIController = {
 
         const sprintId = document.getElementById('task-sprint').value || null;
 
+        const isMilestone = document.getElementById('task-milestone').checked;
+
+        const dependenciesSelect = document.getElementById('task-dependencies');
+        const dependencies = Array.from(dependenciesSelect.selectedOptions).map(opt => opt.value);
+
         const taskData = {
             name: name,
             type: document.getElementById('task-type').value,
@@ -441,7 +450,9 @@ const UIController = {
             description: document.getElementById('task-description').value || '',
             acceptanceCriteria: document.getElementById('task-acceptance-criteria').value || '',
             parentId: parentId,
-            sprintId: sprintId
+            sprintId: sprintId,
+            isMilestone: isMilestone,
+            dependencies: dependencies
         };
 
         if (this.currentTaskModal) {
@@ -805,6 +816,29 @@ const UIController = {
             const selected = sprint.id === selectedSprintId ? 'selected' : '';
             const statusLabel = sprint.status === 'active' ? '🟢 ' : sprint.status === 'completed' ? '✅ ' : '';
             html += `<option value="${sprint.id}" ${selected}>${statusLabel}${Utils.escapeHTML(sprint.name)}</option>`;
+        });
+
+        select.innerHTML = html;
+    },
+
+    /**
+     * Update dependencies select dropdown
+     */
+    updateDependenciesSelect(currentTaskId = null, selectedDependencies = []) {
+        const select = document.getElementById('task-dependencies');
+        if (!select) return;
+
+        const tasks = WBSManager.getTasks();
+        let html = '';
+
+        tasks.forEach(task => {
+            // Don't include the current task (can't depend on itself)
+            if (task.id === currentTaskId) return;
+
+            const selected = selectedDependencies && selectedDependencies.includes(task.id) ? 'selected' : '';
+            const typeLabel = Utils.getTaskTypeLabel(task.type);
+            const statusIcon = task.status === 'done' ? '✅ ' : task.status === 'in_progress' ? '🔄 ' : '';
+            html += `<option value="${task.id}" ${selected}>${statusIcon}${Utils.escapeHTML(task.name)} (${typeLabel})</option>`;
         });
 
         select.innerHTML = html;
