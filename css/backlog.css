@@ -1,0 +1,481 @@
+/* ==========================================================================
+   Backlog & Sprint Management Styles
+   ========================================================================== */
+
+.backlog-layout {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* Sprint Panel (Left) */
+.sprint-panel {
+    width: 320px;
+    min-width: 280px;
+    max-width: 350px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.sprint-list-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+.sprint-list-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-new-sprint {
+    padding: 6px 12px;
+    margin-left: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-new-sprint:hover {
+    background-color: #0056b3;
+    opacity: 0.9;
+}
+
+.sprint-list {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Sprint Card */
+.sprint-card {
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sprint-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.sprint-card.selected {
+    border-color: var(--primary-color);
+    border-width: 2px;
+    background-color: rgba(37, 99, 235, 0.05);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+}
+
+.sprint-card.active {
+    border-left: 4px solid #22c55e;
+    padding-left: 10px;
+}
+
+.sprint-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sprint-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.sprint-status {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sprint-status.planned {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
+.sprint-status.active {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.sprint-status.completed {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.sprint-dates {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.sprint-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stat-item {
+    font-size: 11px;
+    display: flex;
+    gap: 4px;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sprint-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sprint-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-icon {
+    padding: 4px 8px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-tertiary);
+    border-color: #999;
+    transform: scale(1.05);
+}
+
+/* Velocity Chart */
+.velocity-chart {
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.velocity-chart h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.velocity-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 100px;
+    margin-bottom: 12px;
+}
+
+.velocity-bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.velocity-bar {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4px 2px;
+    min-height: 20px;
+    position: relative;
+}
+
+.velocity-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+}
+
+.velocity-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.velocity-average {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Backlog Panel (Right) */
+.backlog-panel {
+    flex: 1;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.backlog-header {
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.backlog-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.backlog-tasks {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Backlog Section */
+.backlog-section {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.backlog-section-header {
+    padding: 12px 16px;
+    background-color: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.section-icon {
+    font-size: 16px;
+}
+
+.section-label {
+    flex: 1;
+    font-size: 14px;
+}
+
+.section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 6px;
+    background-color: var(--bg-primary);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.backlog-task-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+}
+
+.backlog-task-list.drag-over {
+    background-color: rgba(37, 99, 235, 0.05);
+    border: 2px dashed var(--primary-color);
+}
+
+/* Backlog Task Card */
+.backlog-task-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    cursor: move;
+    transition: all 0.2s;
+}
+
+.backlog-task-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-dark);
+    transform: translateY(-2px);
+}
+
+.backlog-task-card.dragging {
+    opacity: 0.4;
+}
+
+.task-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.task-type {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+}
+
+.task-priority {
+    font-size: 16px;
+}
+
+.task-card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.task-card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.task-points,
+.task-assignee,
+.task-date {
+    padding: 2px 6px;
+    background-color: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+/* Unassigned Tasks */
+.unassigned-tasks {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid var(--border-color);
+}
+
+.unassigned-tasks h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.backlog-task-list.unassigned {
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+/* Empty States */
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.empty-state-small {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .backlog-layout {
+        flex-direction: column;
+    }
+
+    .sprint-panel {
+        width: 100%;
+        max-width: none;
+        height: 300px;
+    }
+
+    .backlog-panel {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .backlog-layout {
+        padding: 12px;
+    }
+
+    .sprint-card {
+        padding: 12px;
+    }
+
+    .velocity-bars {
+        height: 80px;
+    }
+}

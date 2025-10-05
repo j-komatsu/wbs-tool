@@ -108,6 +108,10 @@ const UIController = {
                 this.saveSprint();
             });
 
+            document.getElementById('sprint-delete-btn')?.addEventListener('click', () => {
+                this.deleteSprint();
+            });
+
             sprintModal.addEventListener('click', (e) => {
                 if (e.target === sprintModal) {
                     this.hideSprintModal();
@@ -303,12 +307,13 @@ const UIController = {
     },
 
     /**
-     * Render Backlog view (placeholder for MVP)
+     * Render Backlog view
      */
     renderBacklogView() {
-        const container = document.getElementById('backlog-view');
-        if (container) {
-            container.innerHTML = '<div style="padding: 40px; text-align: center;">バックログビューは開発中です</div>';
+        if (typeof BacklogManager !== 'undefined') {
+            BacklogManager.render();
+        } else {
+            console.error('BacklogManager module not loaded');
         }
     },
 
@@ -364,6 +369,7 @@ const UIController = {
         document.getElementById('task-acceptance-criteria').value = '';
 
         this.updateParentTaskSelect();
+        this.updateSprintSelect();
 
         document.getElementById('task-delete-btn').style.display = 'none';
 
@@ -393,6 +399,7 @@ const UIController = {
         document.getElementById('task-acceptance-criteria').value = task.acceptanceCriteria || '';
 
         this.updateParentTaskSelect(task.id, task.parentId);
+        this.updateSprintSelect(task.sprintId);
 
         document.getElementById('task-delete-btn').style.display = 'inline-block';
 
@@ -419,6 +426,8 @@ const UIController = {
 
         const parentId = document.getElementById('task-parent').value || null;
 
+        const sprintId = document.getElementById('task-sprint').value || null;
+
         const taskData = {
             name: name,
             type: document.getElementById('task-type').value,
@@ -431,7 +440,8 @@ const UIController = {
             assignee: document.getElementById('task-assignee').value || null,
             description: document.getElementById('task-description').value || '',
             acceptanceCriteria: document.getElementById('task-acceptance-criteria').value || '',
-            parentId: parentId
+            parentId: parentId,
+            sprintId: sprintId
         };
 
         if (this.currentTaskModal) {
@@ -632,18 +642,121 @@ const UIController = {
     },
 
     /**
-     * Hide sprint modal (placeholder)
+     * Show new sprint modal
      */
-    hideSprintModal() {
-        document.getElementById('sprint-modal')?.classList.remove('active');
+    showNewSprintModal() {
+        this.currentSprintModal = null;
+
+        document.getElementById('sprint-modal-title')?.textContent || (document.querySelector('#sprint-modal .modal-header h2').textContent = 'スプリント作成');
+        document.getElementById('sprint-name').value = '';
+        document.getElementById('sprint-goal').value = '';
+        document.getElementById('sprint-start-date').value = '';
+        document.getElementById('sprint-end-date').value = '';
+        document.getElementById('sprint-status').value = 'planned';
+
+        document.getElementById('sprint-save-btn').textContent = '作成';
+        document.getElementById('sprint-delete-btn').style.display = 'none';
+
+        document.getElementById('sprint-modal').classList.add('active');
     },
 
     /**
-     * Save sprint (placeholder)
+     * Show edit sprint modal
+     */
+    showEditSprintModal(sprintId) {
+        const sprint = WBSManager.getSprint(sprintId);
+        if (!sprint) return;
+
+        this.currentSprintModal = sprintId;
+
+        document.querySelector('#sprint-modal .modal-header h2').textContent = 'スプリント編集';
+        document.getElementById('sprint-name').value = sprint.name;
+        document.getElementById('sprint-goal').value = sprint.goal || '';
+        document.getElementById('sprint-start-date').value = sprint.startDate;
+        document.getElementById('sprint-end-date').value = sprint.endDate;
+        document.getElementById('sprint-status').value = sprint.status || 'planned';
+
+        document.getElementById('sprint-save-btn').textContent = '更新';
+        document.getElementById('sprint-delete-btn').style.display = 'block';
+
+        document.getElementById('sprint-modal').classList.add('active');
+    },
+
+    /**
+     * Hide sprint modal
+     */
+    hideSprintModal() {
+        document.getElementById('sprint-modal').classList.remove('active');
+        this.currentSprintModal = null;
+    },
+
+    /**
+     * Save sprint
      */
     saveSprint() {
-        // MVP: Not implemented
+        const name = document.getElementById('sprint-name').value.trim();
+        const goal = document.getElementById('sprint-goal').value.trim();
+        const startDate = document.getElementById('sprint-start-date').value;
+        const endDate = document.getElementById('sprint-end-date').value;
+        const status = document.getElementById('sprint-status').value;
+
+        if (!name || !startDate || !endDate) {
+            Utils.showNotification('必須項目を入力してください', 'error');
+            return;
+        }
+
+        if (new Date(startDate) >= new Date(endDate)) {
+            Utils.showNotification('終了日は開始日より後にしてください', 'error');
+            return;
+        }
+
+        if (this.currentSprintModal) {
+            // Update existing sprint
+            WBSManager.updateSprint(this.currentSprintModal, {
+                name,
+                goal,
+                startDate,
+                endDate,
+                status
+            });
+            Utils.showNotification('スプリントを更新しました', 'success');
+        } else {
+            // Create new sprint
+            WBSManager.addSprint({
+                name,
+                goal,
+                startDate,
+                endDate,
+                status
+            });
+            Utils.showNotification('スプリントを作成しました', 'success');
+        }
+
         this.hideSprintModal();
+
+        // Refresh backlog view if active
+        if (this.currentView === 'backlog' && typeof BacklogManager !== 'undefined') {
+            BacklogManager.refresh();
+        }
+    },
+
+    /**
+     * Delete sprint
+     */
+    deleteSprint() {
+        if (!this.currentSprintModal) return;
+
+        if (!Utils.confirm('このスプリントを削除しますか？')) return;
+
+        WBSManager.deleteSprint(this.currentSprintModal);
+        Utils.showNotification('スプリントを削除しました', 'success');
+
+        this.hideSprintModal();
+
+        // Refresh backlog view if active
+        if (this.currentView === 'backlog' && typeof BacklogManager !== 'undefined') {
+            BacklogManager.refresh();
+        }
     },
 
     /**
@@ -673,6 +786,25 @@ const UIController = {
             const selected = task.id === selectedParentId ? 'selected' : '';
 
             html += `<option value="${task.id}" ${selected}>${indent}${Utils.escapeHTML(task.name)}</option>`;
+        });
+
+        select.innerHTML = html;
+    },
+
+    /**
+     * Update sprint select dropdown
+     */
+    updateSprintSelect(selectedSprintId = null) {
+        const select = document.getElementById('task-sprint');
+        if (!select) return;
+
+        const sprints = WBSManager.getSprints();
+        let html = '<option value="">未割り当て</option>';
+
+        sprints.forEach(sprint => {
+            const selected = sprint.id === selectedSprintId ? 'selected' : '';
+            const statusLabel = sprint.status === 'active' ? '🟢 ' : sprint.status === 'completed' ? '✅ ' : '';
+            html += `<option value="${sprint.id}" ${selected}>${statusLabel}${Utils.escapeHTML(sprint.name)}</option>`;
         });
 
         select.innerHTML = html;

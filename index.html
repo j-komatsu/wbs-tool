@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/gantt.css">
     <link rel="stylesheet" href="css/kanban.css">
+    <link rel="stylesheet" href="css/backlog.css">
     <link rel="stylesheet" href="css/charts.css">
     <link rel="stylesheet" href="css/theme.css">
 </head>
@@ -109,27 +110,8 @@
 
         <!-- Backlog View -->
         <div id="backlog-view" class="view-container">
-            <div class="backlog-layout">
-                <div class="sprint-panel">
-                    <div class="panel-header">
-                        <h2>スプリント</h2>
-                        <button id="new-sprint-btn" class="btn btn-small">+ 新規スプリント</button>
-                    </div>
-                    <div id="sprint-list" class="sprint-list">
-                        <!-- Sprints will be rendered here -->
-                    </div>
-                </div>
-                <div class="backlog-panel">
-                    <div class="panel-header">
-                        <h2>プロダクトバックログ</h2>
-                        <div class="backlog-stats">
-                            <span>総ポイント: <strong id="total-backlog-points">0</strong></span>
-                        </div>
-                    </div>
-                    <div id="backlog-list" class="backlog-list">
-                        <!-- Backlog items will be rendered here -->
-                    </div>
-                </div>
+            <div id="backlog-container">
+                <!-- Backlog will be rendered here by backlog.js -->
             </div>
         </div>
 
@@ -369,10 +351,19 @@
                             <label>終了日 *</label>
                             <input type="date" id="sprint-end-date" required>
                         </div>
+                        <div class="form-group">
+                            <label>ステータス</label>
+                            <select id="sprint-status">
+                                <option value="planned">計画中</option>
+                                <option value="active">進行中</option>
+                                <option value="completed">完了</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
+                <button id="sprint-delete-btn" class="btn btn-danger" style="margin-right: auto; display: none;">削除</button>
                 <button id="sprint-cancel-btn" class="btn">キャンセル</button>
                 <button id="sprint-save-btn" class="btn btn-primary">作成</button>
             </div>
@@ -386,6 +377,7 @@
     <script src="js/wbs-manager.js"></script>
     <script src="js/gantt-renderer.js"></script>
     <script src="js/kanban.js"></script>
+    <script src="js/backlog.js"></script>
     <script src="js/import-export.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/app.js"></script>

@@ -49,6 +49,13 @@ const Utils = {
     },
 
     /**
+     * Alias for formatDateJP
+     */
+    formatDateJapanese(date) {
+        return this.formatDateJP(date);
+    },
+
+    /**
      * Format datetime to YYYY-MM-DD HH:MM
      * @param {Date|string} date - Date object or ISO string
      * @returns {string} Formatted datetime string

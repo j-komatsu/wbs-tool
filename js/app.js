@@ -28,6 +28,9 @@ const App = {
             if (typeof KanbanBoard !== 'undefined') {
                 KanbanBoard.init();
             }
+            if (typeof BacklogManager !== 'undefined') {
+                BacklogManager.init();
+            }
 
             // Load or create project
             await this.loadInitialProject();

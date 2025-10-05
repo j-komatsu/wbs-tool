@@ -371,5 +371,126 @@ const WBSManager = {
             return true;
         }
         return false;
+    },
+
+    // ==================== Sprint Management ====================
+
+    /**
+     * Get all sprints
+     */
+    getSprints() {
+        return this.currentProject?.sprints || [];
+    },
+
+    /**
+     * Get sprint by ID
+     */
+    getSprint(sprintId) {
+        return this.getSprints().find(s => s.id === sprintId);
+    },
+
+    /**
+     * Add new sprint
+     */
+    addSprint(sprint) {
+        if (!this.currentProject) return false;
+
+        const newSprint = DataModel.createSprint(
+            sprint.name,
+            sprint.startDate,
+            sprint.endDate,
+            sprint.goal
+        );
+
+        if (!this.currentProject.sprints) {
+            this.currentProject.sprints = [];
+        }
+
+        this.currentProject.sprints.push(newSprint);
+        this.save();
+
+        return newSprint;
+    },
+
+    /**
+     * Update sprint
+     */
+    updateSprint(sprintId, updates) {
+        if (!this.currentProject?.sprints) return false;
+
+        const index = this.currentProject.sprints.findIndex(s => s.id === sprintId);
+        if (index === -1) return false;
+
+        this.currentProject.sprints[index] = {
+            ...this.currentProject.sprints[index],
+            ...updates,
+            updatedAt: new Date().toISOString()
+        };
+
+        this.save();
+        return true;
+    },
+
+    /**
+     * Delete sprint
+     */
+    deleteSprint(sprintId) {
+        if (!this.currentProject?.sprints) return false;
+
+        // Remove sprint reference from tasks
+        this.tasks.forEach(task => {
+            if (task.sprintId === sprintId) {
+                task.sprintId = null;
+            }
+        });
+
+        this.currentProject.sprints = this.currentProject.sprints.filter(s => s.id !== sprintId);
+        this.save();
+
+        return true;
+    },
+
+    /**
+     * Start sprint (set status to active)
+     */
+    startSprint(sprintId) {
+        // End any currently active sprints
+        if (this.currentProject?.sprints) {
+            this.currentProject.sprints.forEach(s => {
+                if (s.status === 'active') {
+                    s.status = 'completed';
+                }
+            });
+        }
+
+        return this.updateSprint(sprintId, { status: 'active' });
+    },
+
+    /**
+     * Complete sprint
+     */
+    completeSprint(sprintId) {
+        return this.updateSprint(sprintId, { status: 'completed' });
+    },
+
+    /**
+     * Get active sprint
+     */
+    getActiveSprint() {
+        return this.getSprints().find(s => s.status === 'active');
+    },
+
+    /**
+     * Assign task to sprint
+     */
+    assignTaskToSprint(taskId, sprintId) {
+        return this.updateTask(taskId, { sprintId });
+    },
+
+    /**
+     * Remove task from sprint
+     */
+    removeTaskFromSprint(taskId) {
+        return this.updateTask(taskId, { sprintId: null });
     }
 };
