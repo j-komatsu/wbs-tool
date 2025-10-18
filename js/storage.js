@@ -8,7 +8,8 @@ const Storage = {
         PROJECTS: 'wbs-tool-projects',
         CURRENT_PROJECT: 'wbs-tool-current-project',
         SETTINGS: 'wbs-tool-settings',
-        BACKUPS: 'wbs-tool-backups'
+        BACKUPS: 'wbs-tool-backups',
+        LAST_EXPORT: 'wbs-tool-last-export'
     },
 
     /**
@@ -33,7 +34,7 @@ const Storage = {
             // Start auto-backup
             this.startAutoBackup();
 
-            console.log('Storage initialized');
+            // console.log('Storage initialized');
             return true;
         } catch (error) {
             console.error('Storage initialization failed:', error);
@@ -69,18 +70,37 @@ const Storage = {
     },
 
     /**
-     * Set item to localStorage
+     * Set item to localStorage with backup on failure
      */
     set(key, value) {
+        // Store previous value for rollback
+        const previousValue = this.get(key);
+
         try {
-            localStorage.setItem(key, JSON.stringify(value));
+            const jsonString = JSON.stringify(value);
+
+            // Check if the new data will fit
+            const estimatedSize = new Blob([jsonString]).size;
+
+            localStorage.setItem(key, jsonString);
             return true;
         } catch (error) {
+            // Rollback on error
+            if (previousValue !== null && key !== this.KEYS.BACKUPS) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(previousValue));
+                } catch (rollbackError) {
+                    console.error('Rollback failed:', rollbackError);
+                }
+            }
+
             if (error.name === 'QuotaExceededError') {
                 console.error('Storage quota exceeded');
                 this.handleQuotaExceeded();
+                Utils.showNotification('ストレージ容量が不足しています', 'error');
             } else {
                 console.error(`Error setting ${key}:`, error);
+                Utils.showNotification('データの保存に失敗しました', 'error');
             }
             return false;
         }
@@ -227,7 +247,11 @@ const Storage = {
             showWeekends: true,
             autoSave: true,
             autoSaveInterval: 3000, // 3 seconds
-            language: 'ja'
+            language: 'ja',
+            autoBackup: true,
+            autoBackupInterval: 300000, // 5 minutes
+            exportReminder: true,
+            exportReminderDays: 7
         };
     },
 
@@ -253,7 +277,7 @@ const Storage = {
             }
 
             this.set(this.KEYS.BACKUPS, backups);
-            console.log('Backup created:', backup.id);
+            // console.log('Backup created:', backup.id);
             return backup;
         } catch (error) {
             console.error('Error creating backup:', error);
@@ -283,7 +307,7 @@ const Storage = {
             this.set(this.KEYS.PROJECTS, backup.projects);
             this.set(this.KEYS.SETTINGS, backup.settings);
 
-            console.log('Backup restored:', backupId);
+            // console.log('Backup restored:', backupId);
             return true;
         } catch (error) {
             console.error('Error restoring backup:', error);
@@ -295,10 +319,40 @@ const Storage = {
      * Start auto-backup
      */
     startAutoBackup() {
-        // Create backup every 5 minutes
-        setInterval(() => {
+        const settings = this.getSettings();
+        if (settings.autoBackup === false) {
+            // console.log('Auto-backup is disabled');
+            return;
+        }
+
+        const interval = settings.autoBackupInterval || 300000; // Default: 5 minutes
+        this.autoBackupTimer = setInterval(() => {
             this.createBackup();
-        }, 5 * 60 * 1000);
+        }, interval);
+
+        // console.log(`Auto-backup started (interval: ${interval}ms)`);
+    },
+
+    /**
+     * Stop auto-backup
+     */
+    stopAutoBackup() {
+        if (this.autoBackupTimer) {
+            clearInterval(this.autoBackupTimer);
+            this.autoBackupTimer = null;
+            // console.log('Auto-backup stopped');
+        }
+    },
+
+    /**
+     * Restart auto-backup with new interval
+     */
+    restartAutoBackup(interval) {
+        this.stopAutoBackup();
+        const settings = this.getSettings();
+        settings.autoBackupInterval = interval;
+        this.saveSettings(settings);
+        this.startAutoBackup();
     },
 
     /**
@@ -317,23 +371,57 @@ const Storage = {
     },
 
     /**
-     * Get storage usage
+     * Get storage usage (LocalStorage specific)
      */
     async getStorageUsage() {
-        if (navigator.storage && navigator.storage.estimate) {
-            try {
-                const estimate = await navigator.storage.estimate();
-                return {
-                    usage: estimate.usage,
-                    quota: estimate.quota,
-                    percentage: (estimate.usage / estimate.quota) * 100
-                };
-            } catch (error) {
-                console.error('Error getting storage usage:', error);
-                return null;
+        // Calculate LocalStorage size directly
+        const localStorageSize = this.getLocalStorageSize();
+
+        // For LocalStorage, use the estimated 10MB quota
+        // (navigator.storage.estimate() returns total storage quota which is too large)
+        return localStorageSize;
+    },
+
+    /**
+     * Get LocalStorage size (fallback method)
+     */
+    getLocalStorageSize() {
+        try {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length + key.length;
+                }
             }
+
+            // Estimate quota (most browsers: 5-10MB for localStorage)
+            const estimatedQuota = 10 * 1024 * 1024; // 10MB
+
+            return {
+                usage: total * 2, // UTF-16 encoding
+                quota: estimatedQuota,
+                percentage: (total * 2 / estimatedQuota) * 100,
+                usageFormatted: this.formatBytes(total * 2),
+                quotaFormatted: this.formatBytes(estimatedQuota),
+                isEstimate: true
+            };
+        } catch (error) {
+            console.error('Error calculating localStorage size:', error);
+            return null;
         }
-        return null;
+    },
+
+    /**
+     * Format bytes to human-readable string
+     */
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     },
 
     /**
@@ -353,12 +441,67 @@ const Storage = {
      * Export all data
      */
     exportAll() {
+        // Record export timestamp
+        this.recordExport();
+
         return {
             version: '1.0.0',
             exportedAt: new Date().toISOString(),
             projects: this.getProjects(),
             settings: this.getSettings()
         };
+    },
+
+    /**
+     * Record export timestamp
+     */
+    recordExport() {
+        const timestamp = new Date().toISOString();
+        this.set(this.KEYS.LAST_EXPORT, timestamp);
+        // console.log('Export recorded:', timestamp);
+    },
+
+    /**
+     * Get last export date
+     */
+    getLastExportDate() {
+        return this.get(this.KEYS.LAST_EXPORT);
+    },
+
+    /**
+     * Get days since last export
+     */
+    getDaysSinceLastExport() {
+        const lastExport = this.getLastExportDate();
+        if (!lastExport) {
+            return null; // Never exported
+        }
+
+        const lastExportDate = new Date(lastExport);
+        const now = new Date();
+        const diffTime = Math.abs(now - lastExportDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays;
+    },
+
+    /**
+     * Check if export reminder should be shown
+     */
+    shouldShowExportReminder() {
+        const settings = this.getSettings();
+        const reminderDays = settings.exportReminderDays || 7;
+        const days = this.getDaysSinceLastExport();
+
+        // Never exported
+        if (days === null) {
+            const projects = this.getProjects();
+            // Show reminder if there are projects and never exported
+            return projects.length > 0;
+        }
+
+        // Show reminder if more than configured days since last export
+        return days >= reminderDays;
     },
 
     /**

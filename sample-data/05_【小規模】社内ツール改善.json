@@ -1,0 +1,119 @@
+{
+  "id": "project-small-005",
+  "name": "【小規模】社内ツール改善",
+  "description": "小規模な改善プロジェクト（短期間）",
+  "startDate": "2025-10-01",
+  "endDate": "2025-10-31",
+  "createdAt": "2025-10-01T00:00:00.000Z",
+  "updatedAt": "2025-10-08T00:00:00.000Z",
+  "tasks": [
+    {
+      "id": "small-task-1",
+      "name": "現状分析",
+      "type": "task",
+      "status": "done",
+      "startDate": "2025-10-01",
+      "endDate": "2025-10-03",
+      "actualStartDate": "2025-10-01",
+      "actualEndDate": "2025-10-02",
+      "assignee": "青木隆",
+      "storyPoints": 3,
+      "dependencies": [],
+      "tags": ["分析"],
+      "description": "現状の問題点洗い出し",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "small-sprint-1"
+    },
+    {
+      "id": "small-task-2",
+      "name": "UI改善",
+      "type": "story",
+      "status": "done",
+      "startDate": "2025-10-04",
+      "endDate": "2025-10-08",
+      "actualStartDate": "2025-10-04",
+      "actualEndDate": "2025-10-08",
+      "assignee": "青木隆",
+      "storyPoints": 5,
+      "dependencies": [],
+      "tags": ["UI"],
+      "description": "ユーザーインターフェース改善",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "small-sprint-1"
+    },
+    {
+      "id": "small-task-3",
+      "name": "パフォーマンス改善",
+      "type": "task",
+      "status": "in_progress",
+      "startDate": "2025-10-09",
+      "endDate": "2025-10-15",
+      "actualStartDate": "2025-10-09",
+      "actualEndDate": null,
+      "assignee": "青木隆",
+      "storyPoints": 5,
+      "dependencies": [],
+      "tags": ["パフォーマンス"],
+      "description": "クエリ最適化",
+      "progress": 20,
+      "parentId": null,
+      "sprintId": "small-sprint-1"
+    },
+    {
+      "id": "small-task-4",
+      "name": "テスト実施",
+      "type": "task",
+      "status": "todo",
+      "startDate": "2025-10-16",
+      "endDate": "2025-10-22",
+      "actualStartDate": null,
+      "actualEndDate": null,
+      "assignee": "青木隆",
+      "storyPoints": 3,
+      "dependencies": [],
+      "tags": ["テスト"],
+      "description": "動作確認とユーザーテスト",
+      "progress": 0,
+      "parentId": null,
+      "sprintId": "small-sprint-1"
+    },
+    {
+      "id": "small-task-5",
+      "name": "リリース",
+      "type": "task",
+      "status": "todo",
+      "startDate": "2025-10-23",
+      "endDate": "2025-10-31",
+      "actualStartDate": null,
+      "actualEndDate": null,
+      "assignee": "青木隆",
+      "storyPoints": 2,
+      "dependencies": [],
+      "tags": ["リリース"],
+      "description": "本番環境へのデプロイ",
+      "progress": 0,
+      "parentId": null,
+      "sprintId": "small-sprint-1"
+    }
+  ],
+  "sprints": [
+    {
+      "id": "small-sprint-1",
+      "name": "改善スプリント",
+      "startDate": "2025-10-01",
+      "endDate": "2025-10-31",
+      "goal": "ツールの使い勝手向上",
+      "status": "active"
+    }
+  ],
+  "members": [
+    {
+      "id": "member-20",
+      "name": "青木隆",
+      "role": "フルスタック",
+      "email": "aoki@example.com"
+    }
+  ]
+}

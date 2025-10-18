@@ -1,0 +1,195 @@
+{
+  "id": "project-completed-003",
+  "name": "【完了】社内ポータルサイト構築",
+  "description": "すでに完了したプロジェクト（成功事例）",
+  "startDate": "2025-04-01",
+  "endDate": "2025-08-31",
+  "createdAt": "2025-04-01T00:00:00.000Z",
+  "updatedAt": "2025-08-31T00:00:00.000Z",
+  "tasks": [
+    {
+      "id": "comp-task-1",
+      "name": "要件定義",
+      "type": "epic",
+      "status": "done",
+      "startDate": "2025-04-01",
+      "endDate": "2025-04-20",
+      "actualStartDate": "2025-04-01",
+      "actualEndDate": "2025-04-18",
+      "assignee": "木村拓哉",
+      "storyPoints": 13,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "社内ニーズの調査と要件定義",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-1"
+    },
+    {
+      "id": "comp-task-2",
+      "name": "デザイン設計",
+      "type": "story",
+      "status": "done",
+      "startDate": "2025-04-21",
+      "endDate": "2025-05-10",
+      "actualStartDate": "2025-04-21",
+      "actualEndDate": "2025-05-08",
+      "assignee": "斉藤由美",
+      "storyPoints": 21,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "UIデザインとブランディング",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-1"
+    },
+    {
+      "id": "comp-task-3",
+      "name": "フロントエンド開発",
+      "type": "story",
+      "status": "done",
+      "startDate": "2025-05-11",
+      "endDate": "2025-06-30",
+      "actualStartDate": "2025-05-11",
+      "actualEndDate": "2025-06-28",
+      "assignee": "藤田直樹",
+      "storyPoints": 34,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "Vue.jsでの実装",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-2"
+    },
+    {
+      "id": "comp-task-4",
+      "name": "バックエンド開発",
+      "type": "story",
+      "status": "done",
+      "startDate": "2025-05-11",
+      "endDate": "2025-07-05",
+      "actualStartDate": "2025-05-11",
+      "actualEndDate": "2025-07-03",
+      "assignee": "岡田浩二",
+      "storyPoints": 34,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "Spring Bootでの実装",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-2"
+    },
+    {
+      "id": "comp-task-5",
+      "name": "テスト実施",
+      "type": "task",
+      "status": "done",
+      "startDate": "2025-07-01",
+      "endDate": "2025-07-25",
+      "actualStartDate": "2025-07-01",
+      "actualEndDate": "2025-07-22",
+      "assignee": "前田明美",
+      "storyPoints": 21,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "総合テストとユーザー受入テスト",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-3"
+    },
+    {
+      "id": "comp-task-6",
+      "name": "本番リリース",
+      "type": "task",
+      "status": "done",
+      "startDate": "2025-07-26",
+      "endDate": "2025-08-05",
+      "actualStartDate": "2025-07-26",
+      "actualEndDate": "2025-08-02",
+      "assignee": "木村拓哉",
+      "storyPoints": 8,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "本番環境デプロイ",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-3"
+    },
+    {
+      "id": "comp-task-7",
+      "name": "運用引継ぎ",
+      "type": "task",
+      "status": "done",
+      "startDate": "2025-08-06",
+      "endDate": "2025-08-31",
+      "actualStartDate": "2025-08-06",
+      "actualEndDate": "2025-08-28",
+      "assignee": "木村拓哉",
+      "storyPoints": 8,
+      "dependencies": [],
+      "tags": ["完了"],
+      "description": "運用チームへの引継ぎとドキュメント整備",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "comp-sprint-3"
+    }
+  ],
+  "sprints": [
+    {
+      "id": "comp-sprint-1",
+      "name": "スプリント1",
+      "startDate": "2025-04-01",
+      "endDate": "2025-05-10",
+      "goal": "要件とデザイン確定",
+      "status": "completed"
+    },
+    {
+      "id": "comp-sprint-2",
+      "name": "スプリント2",
+      "startDate": "2025-05-11",
+      "endDate": "2025-07-05",
+      "goal": "システム開発",
+      "status": "completed"
+    },
+    {
+      "id": "comp-sprint-3",
+      "name": "スプリント3",
+      "startDate": "2025-07-06",
+      "endDate": "2025-08-31",
+      "goal": "テストとリリース",
+      "status": "completed"
+    }
+  ],
+  "members": [
+    {
+      "id": "member-11",
+      "name": "木村拓哉",
+      "role": "PM",
+      "email": "kimura@example.com"
+    },
+    {
+      "id": "member-12",
+      "name": "斉藤由美",
+      "role": "デザイナー",
+      "email": "saito@example.com"
+    },
+    {
+      "id": "member-13",
+      "name": "藤田直樹",
+      "role": "フロントエンド",
+      "email": "fujita@example.com"
+    },
+    {
+      "id": "member-14",
+      "name": "岡田浩二",
+      "role": "バックエンド",
+      "email": "okada@example.com"
+    },
+    {
+      "id": "member-15",
+      "name": "前田明美",
+      "role": "QA",
+      "email": "maeda@example.com"
+    }
+  ]
+}

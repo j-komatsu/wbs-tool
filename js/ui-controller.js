@@ -7,6 +7,7 @@ const UIController = {
     currentView: 'gantt',
     currentTaskModal: null,
     currentSprintModal: null,
+    progressDisplayMode: 'chart', // 'chart' | 'percentage'
 
     /**
      * Initialize UI Controller
@@ -14,7 +15,329 @@ const UIController = {
     init() {
         this.setupEventListeners();
         this.setupModals();
-        console.log('UI Controller initialized');
+        this.setupProgressToggle();
+        this.setupColumnResize();
+        this.setupResetColumnWidth();
+        this.setupPanelResize();
+
+        // Force initial panel width and column widths
+        const wbsPanel = document.querySelector('.wbs-list-panel');
+        if (wbsPanel) {
+            wbsPanel.style.setProperty('width', '852px', 'important');
+            wbsPanel.style.setProperty('max-width', '852px', 'important');
+            wbsPanel.style.setProperty('flex-basis', '852px', 'important');
+        }
+
+        // Apply default column widths on initial load
+        const defaultWidths = {
+            'name': '315px',
+            'type': '64px',
+            'points': '65px',
+            'assignee': '139px',
+            'start': '100px',
+            'end': '100px'
+        };
+
+        Object.keys(defaultWidths).forEach(colName => {
+            const cols = document.querySelectorAll(`.wbs-col-${colName}`);
+            cols.forEach(col => {
+                col.style.width = defaultWidths[colName];
+                col.style.minWidth = defaultWidths[colName];
+                col.style.maxWidth = defaultWidths[colName];
+                col.style.flexShrink = '0';
+                col.style.flexGrow = '0';
+            });
+        });
+
+        // Log initial widths
+        setTimeout(() => {
+            this.logColumnWidths();
+        }, 100);
+    },
+
+    /**
+     * Setup progress display toggle
+     */
+    setupProgressToggle() {
+        const progressHeader = document.getElementById('progress-header');
+        if (progressHeader) {
+            progressHeader.addEventListener('click', () => {
+                // Toggle mode
+                this.progressDisplayMode = this.progressDisplayMode === 'chart' ? 'percentage' : 'chart';
+
+                // Update indicator
+                const indicator = document.getElementById('progress-mode-indicator');
+                if (indicator) {
+                    indicator.textContent = this.progressDisplayMode === 'chart' ? '📊' : '%';
+                }
+
+                // Re-render WBS list
+                this.renderWBSList();
+            });
+        }
+    },
+
+    /**
+     * Setup column resize functionality
+     */
+    setupColumnResize() {
+        const headerRow = document.querySelector('.wbs-header-row-2');
+        if (!headerRow) {
+            // console.log('Header row not found for resize');
+            return;
+        }
+
+        let isResizing = false;
+        let currentColName = null;
+        let startX = 0;
+        let startWidth = 0;
+
+        const getOrCreateStyleTag = () => {
+            let styleTag = document.getElementById('wbs-column-widths');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'wbs-column-widths';
+                document.head.appendChild(styleTag);
+            }
+            return styleTag;
+        };
+
+        const updateColumnWidth = (colName, width) => {
+            const minWidth = 50;
+            const finalWidth = Math.max(minWidth, width);
+            const cssClassName = `.wbs-col-${colName}`;
+
+            // Get or create style tag each time
+            const styleTag = getOrCreateStyleTag();
+
+            // Check if sheet is accessible
+            const sheet = styleTag.sheet;
+            if (!sheet) {
+                console.error('StyleSheet not accessible');
+                return;
+            }
+
+            // Remove existing rule if present
+            try {
+                for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
+                    if (sheet.cssRules[i].selectorText === cssClassName) {
+                        sheet.deleteRule(i);
+                    }
+                }
+
+                // Add new rule with max-width to force content overflow
+                sheet.insertRule(`${cssClassName} { width: ${finalWidth}px !important; min-width: ${finalWidth}px !important; max-width: ${finalWidth}px !important; }`, 0);
+            } catch (e) {
+                console.error('Error updating column width:', e);
+            }
+        };
+
+        // Handle mouse down on resize handles
+        const onMouseDown = (e) => {
+            const handle = e.target;
+            if (!handle.classList.contains('resize-handle')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Resize the column that contains this handle
+            const column = handle.parentElement;
+            currentColName = column.dataset.col;
+
+            if (!currentColName) {
+                console.error('Column name not found');
+                return;
+            }
+
+            startX = e.pageX;
+            startWidth = column.offsetWidth;
+            isResizing = true;
+
+            handle.classList.add('resizing');
+            document.body.classList.add('resizing-column');
+
+            // console.log(`Start resizing column: ${currentColName}, width: ${startWidth}px`);
+        };
+
+        // Handle mouse move
+        const onMouseMove = (e) => {
+            if (!isResizing || !currentColName) return;
+
+            e.preventDefault();
+            const diff = e.pageX - startX;
+            const newWidth = startWidth + diff;
+
+            updateColumnWidth(currentColName, newWidth);
+        };
+
+        // Handle mouse up
+        const onMouseUp = () => {
+            if (isResizing) {
+                // console.log(`Stop resizing column: ${currentColName}`);
+
+                isResizing = false;
+                currentColName = null;
+
+                document.body.classList.remove('resizing-column');
+
+                // Remove resizing class from all handles
+                document.querySelectorAll('.resize-handle.resizing').forEach(h => {
+                    h.classList.remove('resizing');
+                });
+            }
+        };
+
+        // Attach event listeners
+        headerRow.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        // console.log('Column resize initialized');
+    },
+
+    /**
+     * Setup reset column width button
+     */
+    setupResetColumnWidth() {
+        const resetBtn = document.getElementById('reset-column-width-btn');
+        if (!resetBtn) return;
+
+        resetBtn.addEventListener('click', () => {
+            // Remove custom width styles
+            const styleTag = document.getElementById('wbs-column-widths');
+            if (styleTag) {
+                styleTag.remove();
+            }
+
+            // Force apply default widths with inline styles
+            const defaultWidths = {
+                'name': '315px',
+                'type': '64px',
+                'points': '65px',
+                'assignee': '139px',
+                'start': '100px',
+                'end': '100px'
+            };
+
+            Object.keys(defaultWidths).forEach(colName => {
+                const cols = document.querySelectorAll(`.wbs-col-${colName}`);
+                cols.forEach(col => {
+                    col.style.width = defaultWidths[colName];
+                    col.style.minWidth = defaultWidths[colName];
+                    col.style.maxWidth = defaultWidths[colName];
+                    col.style.flexShrink = '0';
+                    col.style.flexGrow = '0';
+                });
+            });
+
+            // Reset panel width to initial position
+            const wbsPanel = document.querySelector('.wbs-list-panel');
+            if (wbsPanel) {
+                wbsPanel.style.setProperty('width', '852px', 'important');
+                wbsPanel.style.setProperty('max-width', '852px', 'important');
+                wbsPanel.style.setProperty('flex-basis', '852px', 'important');
+            }
+
+            Utils.showNotification('カラム幅をリセットしました', 'success');
+
+            // Log reset widths
+            setTimeout(() => {
+                this.logColumnWidths();
+            }, 100);
+        });
+    },
+
+    /**
+     * Setup panel resize functionality
+     */
+    setupPanelResize() {
+        const resizeHandle = document.getElementById('panel-resize-handle');
+        const wbsPanel = document.querySelector('.wbs-list-panel');
+
+        if (!resizeHandle || !wbsPanel) {
+            // console.log('Panel resize elements not found');
+            return;
+        }
+
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.pageX;
+            startWidth = wbsPanel.offsetWidth;
+
+            resizeHandle.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+
+            const diff = e.pageX - startX;
+            const newWidth = startWidth + diff;
+
+            // Apply min and max constraints
+            const containerWidth = wbsPanel.parentElement.offsetWidth;
+            const minWidth = 500;
+            const maxWidth = containerWidth - 250; // Leave at least 250px for gantt chart
+            const finalWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+            // Set both width and flex-basis to override CSS flex settings (including media queries)
+            wbsPanel.style.setProperty('width', `${finalWidth}px`, 'important');
+            wbsPanel.style.setProperty('max-width', `${finalWidth}px`, 'important');
+            wbsPanel.style.setProperty('flex-basis', `${finalWidth}px`, 'important');
+            wbsPanel.style.setProperty('flex-grow', '0', 'important');
+            wbsPanel.style.setProperty('flex-shrink', '0', 'important');
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    },
+
+    /**
+     * Log current column widths for debugging
+     */
+    logColumnWidths() {
+        // const columns = [
+        //     'name',
+        //     'type',
+        //     'points',
+        //     'assignee',
+        //     'start',
+        //     'end',
+        //     'progress'
+        // ];
+
+        // console.log('[DEBUG-RESIZE]\n========== Column Widths ==========');
+
+        // const wbsPanel = document.querySelector('.wbs-list-panel');
+        // if (wbsPanel) {
+        //     console.log(`[DEBUG-RESIZE] WBS Panel Width: ${wbsPanel.offsetWidth}px`);
+        // }
+
+        // let totalWidth = 0;
+        // columns.forEach(colName => {
+        //     const col = document.querySelector(`.wbs-col-${colName}`);
+        //     if (col) {
+        //         const width = col.offsetWidth;
+        //         totalWidth += width;
+        //         console.log(`[DEBUG-RESIZE]   ${colName.padEnd(10)}: ${width}px`);
+        //     }
+        // });
+
+        // console.log(`[DEBUG-RESIZE] Total Column Width: ${totalWidth}px`);
+        // console.log('[DEBUG-RESIZE] ===================================\n');
     },
 
     /**
@@ -32,8 +355,14 @@ const UIController = {
         document.getElementById('new-task-btn')?.addEventListener('click', () => this.showNewTaskModal());
         document.getElementById('save-btn')?.addEventListener('click', () => this.saveProject());
         document.getElementById('new-project-btn')?.addEventListener('click', () => this.createNewProject());
+        document.getElementById('delete-project-btn')?.addEventListener('click', () => this.deleteCurrentProject());
         document.getElementById('export-btn')?.addEventListener('click', () => ImportExport.showExportDialog());
         document.getElementById('import-btn')?.addEventListener('click', () => ImportExport.showImportDialog());
+
+        // Jump to today button
+        document.getElementById('jump-to-today-btn')?.addEventListener('click', () => {
+            GanttRenderer.scrollToToday();
+        });
 
         // Search and filters
         document.getElementById('search-input')?.addEventListener('input',
@@ -84,6 +413,39 @@ const UIController = {
             document.getElementById('task-delete-btn')?.addEventListener('click', () => {
                 this.deleteTask();
             });
+
+            // Progress auto-update status
+            const progressInput = document.getElementById('task-progress');
+            const statusSelect = document.getElementById('task-status');
+            if (progressInput && statusSelect) {
+                // When progress changes, auto-update status
+                progressInput.addEventListener('input', (e) => {
+                    const progress = parseInt(e.target.value) || 0;
+                    const currentStatus = statusSelect.value;
+
+                    // Auto-update status based on progress
+                    if (progress > 0 && progress < 100 && currentStatus === 'todo') {
+                        statusSelect.value = 'in_progress';
+                    } else if (progress === 100 && currentStatus !== 'done') {
+                        statusSelect.value = 'done';
+                    }
+                });
+
+                // When status changes, suggest appropriate progress
+                statusSelect.addEventListener('change', (e) => {
+                    const status = e.target.value;
+                    const currentProgress = parseInt(progressInput.value) || 0;
+
+                    // Auto-suggest progress based on status
+                    if (status === 'review' && currentProgress < 90) {
+                        progressInput.value = 90;
+                    } else if (status === 'done' && currentProgress < 100) {
+                        progressInput.value = 100;
+                    } else if (status === 'in_progress' && currentProgress === 0) {
+                        progressInput.value = 10;
+                    }
+                });
+            }
 
             // Click outside to close
             taskModal.addEventListener('click', (e) => {
@@ -138,6 +500,12 @@ const UIController = {
 
         document.getElementById(`${view}-view`)?.classList.add('active');
 
+        // Show/hide jump to today button (only for gantt view)
+        const jumpBtn = document.getElementById('jump-to-today-btn');
+        if (jumpBtn) {
+            jumpBtn.style.display = view === 'gantt' ? 'inline-block' : 'none';
+        }
+
         // Render appropriate view
         switch (view) {
             case 'gantt':
@@ -173,7 +541,7 @@ const UIController = {
         const container = document.getElementById('wbs-list');
         if (!container) return;
 
-        const tasks = WBSManager.getTaskHierarchy();
+        const tasks = WBSManager.getVisibleTasks();
 
         if (tasks.length === 0) {
             container.innerHTML = `
@@ -188,11 +556,6 @@ const UIController = {
         let html = '';
 
         tasks.forEach(task => {
-            // Skip if parent is collapsed
-            if (task.parentId && WBSManager.isCollapsed(task.parentId)) {
-                return;
-            }
-
             html += this.renderTaskRow(task);
         });
 
@@ -200,6 +563,40 @@ const UIController = {
 
         // Add event listeners
         this.attachTaskRowListeners();
+
+        // Re-apply panel width after rendering (in case it was reset)
+        const wbsPanel = document.querySelector('.wbs-list-panel');
+        if (wbsPanel) {
+            const currentWidth = wbsPanel.offsetWidth;
+            // console.log(`[DEBUG-RESIZE] WBS Panel width after rendering: ${currentWidth}px`);
+            if (currentWidth < 852) {
+                wbsPanel.style.setProperty('width', '852px', 'important');
+                wbsPanel.style.setProperty('max-width', '852px', 'important');
+                wbsPanel.style.setProperty('flex-basis', '852px', 'important');
+                // console.log(`[DEBUG-RESIZE] WBS Panel width corrected to: ${wbsPanel.offsetWidth}px`);
+            }
+        }
+
+        // Re-apply column widths after rendering
+        const defaultWidths = {
+            'name': '315px',
+            'type': '64px',
+            'points': '65px',
+            'assignee': '139px',
+            'start': '100px',
+            'end': '100px'
+        };
+
+        Object.keys(defaultWidths).forEach(colName => {
+            const cols = document.querySelectorAll(`.wbs-col-${colName}`);
+            cols.forEach(col => {
+                col.style.width = defaultWidths[colName];
+                col.style.minWidth = defaultWidths[colName];
+                col.style.maxWidth = defaultWidths[colName];
+                col.style.flexShrink = '0';
+                col.style.flexGrow = '0';
+            });
+        });
     },
 
     /**
@@ -208,55 +605,52 @@ const UIController = {
     renderTaskRow(task) {
         const indent = task.level * 20;
         const hasChildren = WBSManager.getTasks().some(t => t.parentId === task.id);
-        const isCollapsed = WBSManager.isCollapsed(task.id);
+        const isCollapsed = WBSManager.isTaskCollapsed(task.id);
+        const parentClass = hasChildren ? ' parent-task' : '';
 
-        let html = `<div class="wbs-task" data-task-id="${task.id}">`;
+        let html = `<div class="wbs-row${parentClass}" data-task-id="${task.id}">`;
 
         // Task name with hierarchy
-        html += `<div class="wbs-task-name wbs-col wbs-col-name">`;
+        html += `<div class="wbs-col wbs-col-name">`;
 
         // Indent
         if (indent > 0) {
-            html += `<span class="wbs-task-indent" style="width: ${indent}px"></span>`;
+            html += `<span class="task-indent" style="width: ${indent}px"></span>`;
         }
 
         // Toggle button for parents
         if (hasChildren) {
-            const toggleClass = isCollapsed ? 'collapsed' : 'expanded';
-            html += `<button class="wbs-task-toggle ${toggleClass}" data-task-id="${task.id}"></button>`;
+            const toggleIcon = isCollapsed ? '▶' : '▼';
+            html += `<span class="task-toggle" data-task-id="${task.id}" style="cursor: pointer; margin-right: 4px;">${toggleIcon}</span>`;
         } else {
             html += `<span style="width: 16px; display: inline-block;"></span>`;
         }
 
         // Task icon
         const icon = this.getTaskIcon(task.type);
-        html += `<span class="wbs-task-icon">${icon}</span>`;
+        html += `<span class="task-type-icon">${icon}</span>`;
 
         // Task name
-        html += `<span class="wbs-task-text">${Utils.escapeHTML(task.name)}</span>`;
+        html += `<span class="task-name" style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="${Utils.escapeHTML(task.name)}">${Utils.escapeHTML(task.name)}</span>`;
         html += `</div>`;
 
         // Type
-        html += `<div class="wbs-col wbs-col-type"><span class="wbs-task-type task-type-${task.type}">${this.getTaskTypeLabel(task.type)}</span></div>`;
+        html += `<div class="wbs-col wbs-col-type">${this.getTaskTypeLabel(task.type)}</div>`;
 
         // Story points
-        html += `<div class="wbs-col wbs-col-points wbs-task-points">${task.storyPoints || '-'}</div>`;
+        html += `<div class="wbs-col wbs-col-points">${task.storyPoints || '-'}</div>`;
 
         // Assignee
-        html += `<div class="wbs-col wbs-col-assignee wbs-task-assignee">${Utils.escapeHTML(task.assignee || '')}</div>`;
+        html += `<div class="wbs-col wbs-col-assignee" title="${Utils.escapeHTML(task.assignee || '')}">${Utils.escapeHTML(task.assignee || '-')}</div>`;
 
         // Start date
-        html += `<div class="wbs-col wbs-col-start wbs-task-date">${task.startDate || ''}</div>`;
+        html += `<div class="wbs-col wbs-col-start">${task.startDate ? Utils.formatDate(task.startDate) : '-'}</div>`;
 
         // End date
-        html += `<div class="wbs-col wbs-col-end wbs-task-date">${task.endDate || ''}</div>`;
+        html += `<div class="wbs-col wbs-col-end">${task.endDate ? Utils.formatDate(task.endDate) : '-'}</div>`;
 
         // Progress
-        html += `<div class="wbs-col wbs-col-progress wbs-task-progress">`;
-        html += `<div class="progress-bar-container">`;
-        html += `<div class="progress-bar" style="width: ${task.progress}%"></div>`;
-        html += `</div>`;
-        html += `</div>`;
+        html += `<div class="wbs-col wbs-col-progress">${task.progress}%</div>`;
 
         html += `</div>`;
 
@@ -264,11 +658,44 @@ const UIController = {
     },
 
     /**
+     * Select a task row
+     */
+    selectTaskRow(taskId) {
+        // Remove previous selection
+        document.querySelectorAll('.wbs-row.selected').forEach(row => {
+            row.classList.remove('selected');
+        });
+
+        // Add selection to clicked row
+        const row = document.querySelector(`.wbs-row[data-task-id="${taskId}"]`);
+        if (row) {
+            row.classList.add('selected');
+        }
+
+        // Store selected task ID
+        this.selectedTaskId = taskId;
+
+        // Re-render gantt chart to highlight selected task
+        this.renderGanttChart();
+    },
+
+    /**
      * Attach event listeners to task rows
      */
     attachTaskRowListeners() {
+        // Single click to select row
+        document.querySelectorAll('.wbs-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                // Don't select if clicking on toggle button
+                if (e.target.classList.contains('task-toggle')) return;
+
+                const taskId = e.currentTarget.dataset.taskId;
+                this.selectTaskRow(taskId);
+            });
+        });
+
         // Double click to edit
-        document.querySelectorAll('.wbs-task').forEach(row => {
+        document.querySelectorAll('.wbs-row').forEach(row => {
             row.addEventListener('dblclick', (e) => {
                 const taskId = e.currentTarget.dataset.taskId;
                 this.showEditTaskModal(taskId);
@@ -276,23 +703,124 @@ const UIController = {
         });
 
         // Toggle collapse
-        document.querySelectorAll('.wbs-task-toggle').forEach(btn => {
+        document.querySelectorAll('.task-toggle').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = e.target.dataset.taskId;
-                WBSManager.toggleCollapse(taskId);
+                WBSManager.toggleTaskCollapse(taskId);
                 this.renderWBSList();
+                this.renderGanttChart();
             });
         });
+
+        // Drag and drop for task hierarchy
+        document.querySelectorAll('.wbs-row').forEach(row => {
+            row.setAttribute('draggable', 'true');
+
+            row.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', e.currentTarget.dataset.taskId);
+                e.currentTarget.style.opacity = '0.5';
+            });
+
+            row.addEventListener('dragend', (e) => {
+                e.currentTarget.style.opacity = '1';
+            });
+
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('drag-over');
+            });
+
+            row.addEventListener('dragleave', (e) => {
+                e.currentTarget.classList.remove('drag-over');
+            });
+
+            row.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+
+                const draggedTaskId = e.dataTransfer.getData('text/plain');
+                const targetTaskId = e.currentTarget.dataset.taskId;
+
+                if (draggedTaskId === targetTaskId) return;
+
+                // Move task under target as child
+                this.moveTaskToParent(draggedTaskId, targetTaskId);
+            });
+        });
+    },
+
+    /**
+     * Move task to new parent
+     */
+    moveTaskToParent(taskId, newParentId) {
+        const task = WBSManager.getTask(taskId);
+        const newParent = WBSManager.getTask(newParentId);
+
+        if (!task || !newParent) return;
+
+        // Prevent circular reference
+        if (this.wouldCreateCircularReference(taskId, newParentId)) {
+            Utils.showNotification('親タスクを自分の子タスクには移動できません', 'error');
+            return;
+        }
+
+        // Update parent
+        WBSManager.updateTask(taskId, { parentId: newParentId });
+
+        Utils.showNotification(`「${task.name}」を「${newParent.name}」の子タスクに移動しました`, 'success');
+        this.refresh();
+    },
+
+    /**
+     * Check if move would create circular reference
+     */
+    wouldCreateCircularReference(taskId, newParentId) {
+        let currentId = newParentId;
+        while (currentId) {
+            if (currentId === taskId) return true;
+            const parent = WBSManager.getTask(currentId);
+            currentId = parent ? parent.parentId : null;
+        }
+        return false;
     },
 
     /**
      * Render Gantt chart
      */
     renderGanttChart() {
-        const tasks = WBSManager.getFilteredTasks();
-        GanttRenderer.renderTimelineHeader();
+        // Use same visible tasks as WBS list for consistency
+        const tasks = WBSManager.getVisibleTasks();
         GanttRenderer.render(tasks);
+        GanttRenderer.renderTimelineHeader();
+        this.setupGanttScrollSync();
+    },
+
+    /**
+     * Setup scroll synchronization between header and canvas
+     */
+    setupGanttScrollSync() {
+        const header = document.getElementById('gantt-header');
+        const container = document.getElementById('gantt-canvas-container');
+        const wbsList = document.getElementById('wbs-list');
+
+        if (!header || !container || !wbsList) return;
+
+        // Sync horizontal scroll between header and canvas
+        container.addEventListener('scroll', () => {
+            header.scrollLeft = container.scrollLeft;
+        });
+
+        // Sync vertical scroll between WBS list and canvas
+        wbsList.addEventListener('scroll', () => {
+            container.scrollTop = wbsList.scrollTop;
+        });
+
+        container.addEventListener('scroll', () => {
+            wbsList.scrollTop = container.scrollTop;
+        });
     },
 
     /**
@@ -331,10 +859,7 @@ const UIController = {
      * Render Report view (placeholder for MVP)
      */
     renderReportView() {
-        const container = document.getElementById('report-content');
-        if (container) {
-            container.innerHTML = '<div style="padding: 40px; text-align: center;">レポート機能は開発中です</div>';
-        }
+        ReportGenerator.render();
     },
 
     /**
@@ -375,7 +900,30 @@ const UIController = {
 
         this.currentTaskModal = task;
 
-        document.getElementById('task-modal-title').textContent = 'タスク編集';
+        // Calculate task hierarchy level
+        let level = 0;
+        let currentTask = task;
+        while (currentTask.parentId) {
+            level++;
+            currentTask = WBSManager.getTask(currentTask.parentId);
+            if (!currentTask) break;
+        }
+
+        const hasChildren = WBSManager.getTasks().some(t => t.parentId === task.id);
+
+        // Build title based on level and children
+        let title = 'タスク編集';
+        if (level === 0 && hasChildren) {
+            title = '親タスク編集';
+        } else if (level === 1 && hasChildren) {
+            title = '子タスク編集 (さらに子タスクあり)';
+        } else if (level === 1) {
+            title = '子タスク編集';
+        } else if (level > 1) {
+            title = `子タスク編集 (レベル${level + 1})`;
+        }
+
+        document.getElementById('task-modal-title').textContent = title;
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-type').value = task.type;
         document.getElementById('task-status').value = task.status;
@@ -422,8 +970,10 @@ const UIController = {
 
         const isMilestone = document.getElementById('task-milestone').checked;
 
-        const dependenciesSelect = document.getElementById('task-dependencies');
-        const dependencies = Array.from(dependenciesSelect.selectedOptions).map(opt => opt.value);
+        // Get checked dependencies from checkboxes
+        const dependenciesContainer = document.getElementById('task-dependencies-list');
+        const dependencyCheckboxes = dependenciesContainer.querySelectorAll('input[type="checkbox"]:checked');
+        const dependencies = Array.from(dependencyCheckboxes).map(cb => cb.value);
 
         const taskData = {
             name: name,
@@ -516,6 +1066,42 @@ const UIController = {
     },
 
     /**
+     * Delete current project
+     */
+    deleteCurrentProject() {
+        const currentId = Storage.getCurrentProjectId();
+        if (!currentId) {
+            Utils.showNotification('削除するプロジェクトがありません', 'error');
+            return;
+        }
+
+        const project = Storage.getProject(currentId);
+        if (!project) return;
+
+        if (!confirm(`プロジェクト「${project.name}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`)) {
+            return;
+        }
+
+        // Delete project
+        Storage.deleteProject(currentId);
+
+        // Switch to another project or clear
+        const projects = Storage.getProjects();
+        if (projects.length > 0) {
+            Storage.setCurrentProject(projects[0].id);
+            this.loadProject(projects[0].id);
+        } else {
+            // No projects left
+            Storage.setCurrentProject(null);
+            WBSManager.init(null);
+            this.refresh();
+        }
+
+        this.updateProjectSelector();
+        Utils.showNotification('プロジェクトを削除しました', 'success');
+    },
+
+    /**
      * Switch project
      */
     switchProject(projectId) {
@@ -559,6 +1145,12 @@ const UIController = {
         });
 
         select.innerHTML = html;
+
+        // Show/hide delete button based on project selection
+        const deleteBtn = document.getElementById('delete-project-btn');
+        if (deleteBtn) {
+            deleteBtn.style.display = currentId ? 'flex' : 'none';
+        }
     },
 
     /**
@@ -622,7 +1214,8 @@ const UIController = {
             epic: '📦',
             story: '📖',
             task: '📋',
-            bug: '🐛'
+            bug: '🐛',
+            folder: '📁'
         };
         return icons[type] || '📋';
     },
@@ -635,7 +1228,8 @@ const UIController = {
             epic: 'Epic',
             story: 'Story',
             task: 'Task',
-            bug: 'Bug'
+            bug: 'Bug',
+            folder: 'Folder'
         };
         return labels[type] || type;
     },
@@ -810,11 +1404,11 @@ const UIController = {
     },
 
     /**
-     * Update dependencies select dropdown
+     * Update dependencies list with checkboxes
      */
     updateDependenciesSelect(currentTaskId = null, selectedDependencies = []) {
-        const select = document.getElementById('task-dependencies');
-        if (!select) return;
+        const container = document.getElementById('task-dependencies-list');
+        if (!container) return;
 
         const tasks = WBSManager.getTasks();
         let html = '';
@@ -823,12 +1417,22 @@ const UIController = {
             // Don't include the current task (can't depend on itself)
             if (task.id === currentTaskId) return;
 
-            const selected = selectedDependencies && selectedDependencies.includes(task.id) ? 'selected' : '';
+            const checked = selectedDependencies && selectedDependencies.includes(task.id) ? 'checked' : '';
             const typeLabel = Utils.getTaskTypeLabel(task.type);
             const statusIcon = task.status === 'done' ? '✅ ' : task.status === 'in_progress' ? '🔄 ' : '';
-            html += `<option value="${task.id}" ${selected}>${statusIcon}${Utils.escapeHTML(task.name)} (${typeLabel})</option>`;
+
+            html += `
+                <div class="dependency-item">
+                    <input type="checkbox" id="dep-${task.id}" value="${task.id}" ${checked}>
+                    <label for="dep-${task.id}">${statusIcon}${Utils.escapeHTML(task.name)} (${typeLabel})</label>
+                </div>
+            `;
         });
 
-        select.innerHTML = html;
+        if (html === '') {
+            html = '<p style="color: var(--text-secondary); font-size: 13px; padding: 8px;">他のタスクがありません</p>';
+        }
+
+        container.innerHTML = html;
     }
 };

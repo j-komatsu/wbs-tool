@@ -25,15 +25,38 @@
 
 .wbs-header {
     display: flex;
+    flex-direction: column;
     background-color: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-color);
-    padding: 0 12px;
     font-size: 12px;
     font-weight: 600;
     color: var(--text-secondary);
-    height: 36px;
-    align-items: center;
+    height: 72px;
     flex-shrink: 0;
+}
+
+.wbs-header-row {
+    display: flex;
+    align-items: center;
+}
+
+.wbs-header-row-1 {
+    height: 36px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wbs-header-row-2 {
+    height: 36px;
+    padding: 0 12px;
+}
+
+.wbs-header-label {
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .wbs-col {
@@ -101,6 +124,15 @@
 
 .wbs-task.dragging {
     opacity: 0.5;
+}
+
+.wbs-task.drag-over {
+    background-color: rgba(37, 99, 235, 0.15);
+    border-left: 3px solid var(--primary-color);
+}
+
+.wbs-task[draggable="true"] {
+    cursor: move;
 }
 
 /* Task Hierarchy */
@@ -188,6 +220,11 @@
     color: #991b1b;
 }
 
+.task-type-folder {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
 /* Story Points */
 .wbs-task-points {
     width: 50px;
@@ -240,6 +277,12 @@
     background-color: var(--danger-color);
 }
 
+.progress-percentage {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
 /* ==========================================================================
    Gantt Chart Panel
    ========================================================================== */
@@ -250,6 +293,55 @@
     flex-direction: column;
     background-color: var(--bg-secondary);
     overflow: hidden;
+}
+
+.gantt-controls {
+    height: 36px;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.gantt-controls-left {
+    display: flex;
+    gap: 16px;
+}
+
+.gantt-controls-right {
+    display: flex;
+    gap: 16px;
+    margin-left: auto;
+}
+
+.gantt-control-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.gantt-control-item input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.gantt-control-item span {
+    cursor: pointer;
+}
+
+.progress-mode-select {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
 }
 
 .gantt-header {
@@ -280,10 +372,19 @@
 .gantt-timeline-cell.today {
     background-color: rgba(37, 99, 235, 0.1);
     color: var(--primary-color);
+    font-weight: 700;
 }
 
-.gantt-timeline-cell.weekend {
-    background-color: var(--bg-hover);
+.gantt-timeline-cell.saturday {
+    background-color: #eff6ff;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.gantt-timeline-cell.sunday-holiday {
+    background-color: #fef2f2;
+    color: #ef4444;
+    font-weight: 600;
 }
 
 .gantt-canvas-container {

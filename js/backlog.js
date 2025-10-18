@@ -11,7 +11,7 @@ const BacklogManager = (() => {
      * 初期化
      */
     function init() {
-        console.log('Backlog Manager initialized');
+        // console.log('Backlog Manager initialized');
     }
 
     /**

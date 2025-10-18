@@ -52,7 +52,7 @@ const DataModel = {
         return {
             id: Utils.generateUUID(),
             name: name,
-            type: 'task', // epic | story | task | bug
+            type: 'task', // epic | story | task | bug | folder
             parentId: parentId,
             order: 0,
             status: 'todo', // todo | in_progress | review | done
@@ -168,7 +168,7 @@ const DataModel = {
 
         if (!task.id) errors.push('Task ID is required');
         if (!task.name || task.name.trim() === '') errors.push('Task name is required');
-        if (!['epic', 'story', 'task', 'bug'].includes(task.type)) {
+        if (!['epic', 'story', 'task', 'bug', 'folder'].includes(task.type)) {
             errors.push('Invalid task type');
         }
         if (!['todo', 'in_progress', 'review', 'done'].includes(task.status)) {
@@ -202,7 +202,7 @@ const DataModel = {
     },
 
     /**
-     * Get task hierarchy (with children)
+     * Get task hierarchy (flattened with level - for display)
      */
     getTaskHierarchy(tasks, parentId = null, level = 0) {
         const result = [];
@@ -218,6 +218,24 @@ const DataModel = {
             // Recursively get children
             const childTasks = this.getTaskHierarchy(tasks, task.id, level + 1);
             result.push(...childTasks);
+        });
+
+        return result;
+    },
+
+    /**
+     * Build task tree (nested structure with children property)
+     */
+    buildTaskTree(tasks, parentId = null) {
+        const result = [];
+        const children = tasks.filter(t => t.parentId === parentId);
+
+        children.forEach(task => {
+            const taskNode = {
+                ...task,
+                children: this.buildTaskTree(tasks, task.id)
+            };
+            result.push(taskNode);
         });
 
         return result;

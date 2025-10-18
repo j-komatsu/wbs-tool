@@ -17,7 +17,7 @@ const Utils = {
     },
 
     /**
-     * Format date to YYYY-MM-DD
+     * Format date according to user settings
      * @param {Date|string} date - Date object or ISO string
      * @returns {string} Formatted date string
      */
@@ -26,10 +26,29 @@ const Utils = {
         const d = new Date(date);
         if (isNaN(d.getTime())) return '';
 
+        // Get date format from settings
+        const settings = typeof Storage !== 'undefined' ? Storage.getSettings() : null;
+        const dateFormat = settings ? settings.dateFormat : 'YYYY-MM-DD';
+
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+
+        // Apply format based on setting
+        switch (dateFormat) {
+            case 'YYYY-MM-DD':
+                return `${year}-${month}-${day}`;
+            case 'YYYY/MM/DD':
+                return `${year}/${month}/${day}`;
+            case 'YYYY年MM月DD日':
+                return `${year}年${parseInt(month)}月${parseInt(day)}日`;
+            case 'MM/DD/YYYY':
+                return `${month}/${day}/${year}`;
+            case 'DD/MM/YYYY':
+                return `${day}/${month}/${year}`;
+            default:
+                return `${year}-${month}-${day}`;
+        }
     },
 
     /**
@@ -105,6 +124,61 @@ const Utils = {
         const d = new Date(date);
         const day = d.getDay();
         return day === 0 || day === 6;
+    },
+
+    /**
+     * Check if date is Saturday
+     * @param {Date|string} date - Date to check
+     * @returns {boolean} True if Saturday
+     */
+    isSaturday(date) {
+        const d = new Date(date);
+        return d.getDay() === 6;
+    },
+
+    /**
+     * Check if date is Sunday
+     * @param {Date|string} date - Date to check
+     * @returns {boolean} True if Sunday
+     */
+    isSunday(date) {
+        const d = new Date(date);
+        return d.getDay() === 0;
+    },
+
+    /**
+     * Check if date is Japanese holiday (simplified)
+     * @param {Date|string} date - Date to check
+     * @returns {boolean} True if holiday
+     */
+    isHoliday(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        const day = d.getDate();
+
+        // 2025年の主要祝日（簡易版）
+        const holidays = [
+            '1/1',   // 元日
+            '1/13',  // 成人の日（2025年）
+            '2/11',  // 建国記念の日
+            '2/23',  // 天皇誕生日
+            '3/20',  // 春分の日（2025年）
+            '4/29',  // 昭和の日
+            '5/3',   // 憲法記念日
+            '5/4',   // みどりの日
+            '5/5',   // こどもの日
+            '7/21',  // 海の日（2025年）
+            '8/11',  // 山の日
+            '9/15',  // 敬老の日（2025年）
+            '9/23',  // 秋分の日（2025年）
+            '10/13', // スポーツの日（2025年）
+            '11/3',  // 文化の日
+            '11/23', // 勤労感謝の日
+        ];
+
+        const dateStr = `${month}/${day}`;
+        return holidays.includes(dateStr);
     },
 
     /**

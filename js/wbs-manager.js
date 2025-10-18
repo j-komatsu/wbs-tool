@@ -23,7 +23,7 @@ const WBSManager = {
         this.tasks = project.tasks || [];
         this.selectedTaskId = null;
         this.collapsedTasks.clear();
-        console.log('WBS Manager initialized with', this.tasks.length, 'tasks');
+        // console.log('WBS Manager initialized with', this.tasks.length, 'tasks');
     },
 
     /**
@@ -67,11 +67,13 @@ const WBSManager = {
             return null;
         }
 
-        // Set parent
-        task.parentId = parentId;
+        // Set parent (only if not already set in task object)
+        if (parentId !== null) {
+            task.parentId = parentId;
+        }
 
         // Set order (last in parent group)
-        const siblings = this.tasks.filter(t => t.parentId === parentId);
+        const siblings = this.tasks.filter(t => t.parentId === task.parentId);
         task.order = siblings.length;
 
         // Add to tasks
@@ -290,6 +292,51 @@ const WBSManager = {
      */
     setFilters(filters) {
         this.filters = { ...this.filters, ...filters };
+    },
+
+    /**
+     * Toggle task collapse state
+     */
+    toggleTaskCollapse(taskId) {
+        if (this.collapsedTasks.has(taskId)) {
+            this.collapsedTasks.delete(taskId);
+        } else {
+            this.collapsedTasks.add(taskId);
+        }
+    },
+
+    /**
+     * Check if task is collapsed
+     */
+    isTaskCollapsed(taskId) {
+        return this.collapsedTasks.has(taskId);
+    },
+
+    /**
+     * Get visible tasks (respecting collapse state)
+     */
+    getVisibleTasks() {
+        const filteredTasks = this.getFilteredTasks();
+        const tree = DataModel.buildTaskTree(filteredTasks);
+        const visible = [];
+
+        const addVisibleTasks = (tasks, parentCollapsed = false, level = 0) => {
+            tasks.forEach(task => {
+                if (!parentCollapsed) {
+                    // Add level property to task for rendering
+                    const taskWithLevel = { ...task, level };
+                    visible.push(taskWithLevel);
+                }
+
+                if (task.children && task.children.length > 0) {
+                    const isCollapsed = this.isTaskCollapsed(task.id);
+                    addVisibleTasks(task.children, parentCollapsed || isCollapsed, level + 1);
+                }
+            });
+        };
+
+        addVisibleTasks(tree);
+        return visible;
     },
 
     /**

@@ -1,0 +1,177 @@
+{
+  "id": "project-smooth-001",
+  "name": "【順調】モバイルアプリ開発プロジェクト",
+  "description": "進捗が順調で予定通り進んでいるプロジェクト",
+  "startDate": "2025-08-01",
+  "endDate": "2025-11-30",
+  "createdAt": "2025-08-01T00:00:00.000Z",
+  "updatedAt": "2025-10-08T00:00:00.000Z",
+  "tasks": [
+    {
+      "id": "smooth-task-1",
+      "name": "要件定義",
+      "type": "epic",
+      "status": "done",
+      "startDate": "2025-08-01",
+      "endDate": "2025-08-15",
+      "actualStartDate": "2025-08-01",
+      "actualEndDate": "2025-08-14",
+      "assignee": "山田太郎",
+      "storyPoints": 13,
+      "dependencies": [],
+      "tags": ["順調"],
+      "description": "要件定義フェーズ",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "smooth-sprint-1"
+    },
+    {
+      "id": "smooth-task-2",
+      "name": "UI/UX設計",
+      "type": "story",
+      "status": "done",
+      "startDate": "2025-08-16",
+      "endDate": "2025-09-05",
+      "actualStartDate": "2025-08-16",
+      "actualEndDate": "2025-09-04",
+      "assignee": "佐藤花子",
+      "storyPoints": 21,
+      "dependencies": [],
+      "tags": ["順調", "デザイン"],
+      "description": "画面設計とプロトタイプ作成",
+      "progress": 100,
+      "parentId": null,
+      "sprintId": "smooth-sprint-1"
+    },
+    {
+      "id": "smooth-task-3",
+      "name": "フロントエンド実装",
+      "type": "story",
+      "status": "in_progress",
+      "startDate": "2025-09-06",
+      "endDate": "2025-10-20",
+      "actualStartDate": "2025-09-06",
+      "actualEndDate": null,
+      "assignee": "田中次郎",
+      "storyPoints": 34,
+      "dependencies": [],
+      "tags": ["順調", "開発"],
+      "description": "React Nativeでの実装",
+      "progress": 65,
+      "parentId": null,
+      "sprintId": "smooth-sprint-2"
+    },
+    {
+      "id": "smooth-task-4",
+      "name": "バックエンドAPI開発",
+      "type": "story",
+      "status": "in_progress",
+      "startDate": "2025-09-10",
+      "endDate": "2025-10-25",
+      "actualStartDate": "2025-09-10",
+      "actualEndDate": null,
+      "assignee": "鈴木一郎",
+      "storyPoints": 34,
+      "dependencies": [],
+      "tags": ["順調", "API"],
+      "description": "Node.jsでのAPI実装",
+      "progress": 70,
+      "parentId": null,
+      "sprintId": "smooth-sprint-2"
+    },
+    {
+      "id": "smooth-task-5",
+      "name": "テスト実施",
+      "type": "task",
+      "status": "todo",
+      "startDate": "2025-10-21",
+      "endDate": "2025-11-15",
+      "actualStartDate": null,
+      "actualEndDate": null,
+      "assignee": "高橋三郎",
+      "storyPoints": 21,
+      "dependencies": [],
+      "tags": ["テスト"],
+      "description": "総合テスト実施",
+      "progress": 0,
+      "parentId": null,
+      "sprintId": "smooth-sprint-3"
+    },
+    {
+      "id": "smooth-task-6",
+      "name": "リリース準備",
+      "type": "task",
+      "status": "todo",
+      "startDate": "2025-11-16",
+      "endDate": "2025-11-30",
+      "actualStartDate": null,
+      "actualEndDate": null,
+      "assignee": "山田太郎",
+      "storyPoints": 8,
+      "dependencies": [],
+      "tags": ["リリース"],
+      "description": "ストア申請とリリース作業",
+      "progress": 0,
+      "parentId": null,
+      "sprintId": "smooth-sprint-3"
+    }
+  ],
+  "sprints": [
+    {
+      "id": "smooth-sprint-1",
+      "name": "スプリント1",
+      "startDate": "2025-08-01",
+      "endDate": "2025-09-05",
+      "goal": "要件定義とUI設計完了",
+      "status": "completed"
+    },
+    {
+      "id": "smooth-sprint-2",
+      "name": "スプリント2",
+      "startDate": "2025-09-06",
+      "endDate": "2025-10-20",
+      "goal": "フロント・バックエンド開発",
+      "status": "active"
+    },
+    {
+      "id": "smooth-sprint-3",
+      "name": "スプリント3",
+      "startDate": "2025-10-21",
+      "endDate": "2025-11-30",
+      "goal": "テストとリリース",
+      "status": "planned"
+    }
+  ],
+  "members": [
+    {
+      "id": "member-1",
+      "name": "山田太郎",
+      "role": "PM",
+      "email": "yamada@example.com"
+    },
+    {
+      "id": "member-2",
+      "name": "佐藤花子",
+      "role": "デザイナー",
+      "email": "sato@example.com"
+    },
+    {
+      "id": "member-3",
+      "name": "田中次郎",
+      "role": "フロントエンド",
+      "email": "tanaka@example.com"
+    },
+    {
+      "id": "member-4",
+      "name": "鈴木一郎",
+      "role": "バックエンド",
+      "email": "suzuki@example.com"
+    },
+    {
+      "id": "member-5",
+      "name": "高橋三郎",
+      "role": "QA",
+      "email": "takahashi@example.com"
+    }
+  ]
+}

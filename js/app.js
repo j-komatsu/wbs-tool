@@ -4,7 +4,7 @@
  */
 
 const App = {
-    version: '0.1.0-mvp',
+    version: '0.1.1-mvp',
     initialized: false,
 
     /**
@@ -12,11 +12,22 @@ const App = {
      */
     async init() {
         try {
-            console.log(`WBS Tool v${this.version} - Initializing...`);
+            // console.log(`WBS Tool v${this.version} - Initializing...`);
 
             // Initialize storage
             if (!Storage.init()) {
                 throw new Error('Failed to initialize storage');
+            }
+
+            // Initialize error handler
+            ErrorHandler.init();
+
+            // Initialize settings manager
+            SettingsManager.init();
+
+            // Initialize help manager
+            if (typeof HelpManager !== 'undefined') {
+                HelpManager.init();
             }
 
             // Check storage quota
@@ -34,6 +45,9 @@ const App = {
             if (typeof ChartExpander !== 'undefined') {
                 ChartExpander.init();
             }
+            if (typeof ReportGenerator !== 'undefined') {
+                ReportGenerator.init();
+            }
 
             // Load or create project
             await this.loadInitialProject();
@@ -47,7 +61,7 @@ const App = {
             // Mark as initialized
             this.initialized = true;
 
-            console.log('WBS Tool initialized successfully');
+            // console.log('WBS Tool initialized successfully');
 
             // Show welcome message for first-time users
             this.checkFirstVisit();

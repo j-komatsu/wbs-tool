@@ -12,12 +12,43 @@ const ChartsRenderer = (() => {
         const tasks = WBSManager.getTasks();
 
         renderKPIs(sprints, tasks);
-        renderBurndownChart();
-        renderBurnupChart();
+        renderProgressTrendChart(tasks, 'weekly'); // Add progress trend chart
+        renderBurndownChart('project'); // Default to project scope
+        renderBurnupChart('project'); // Default to project scope
         renderVelocityChart();
         renderStatusChart(tasks);
         renderAssigneeChart(tasks);
         renderCFDChart();
+
+        // Setup period selector for progress trend
+        const periodSelect = document.getElementById('progress-period-select');
+        if (periodSelect) {
+            periodSelect.addEventListener('change', (e) => {
+                renderProgressTrendChart(tasks, e.target.value);
+            });
+        }
+
+        // Setup scope selector for burndown chart
+        const burndownScopeSelect = document.getElementById('burndown-scope-select');
+        const burndownPeriodSelect = document.getElementById('burndown-period-select');
+        if (burndownScopeSelect && burndownPeriodSelect) {
+            const updateBurndown = () => {
+                renderBurndownChart(burndownScopeSelect.value, burndownPeriodSelect.value);
+            };
+            burndownScopeSelect.addEventListener('change', updateBurndown);
+            burndownPeriodSelect.addEventListener('change', updateBurndown);
+        }
+
+        // Setup scope selector for burnup chart
+        const burnupScopeSelect = document.getElementById('burnup-scope-select');
+        const burnupPeriodSelect = document.getElementById('burnup-period-select');
+        if (burnupScopeSelect && burnupPeriodSelect) {
+            const updateBurnup = () => {
+                renderBurnupChart(burnupScopeSelect.value, burnupPeriodSelect.value);
+            };
+            burnupScopeSelect.addEventListener('change', updateBurnup);
+            burnupPeriodSelect.addEventListener('change', updateBurnup);
+        }
     }
 
     /**
@@ -72,9 +103,263 @@ const ChartsRenderer = (() => {
     }
 
     /**
+     * Render Progress Trend Chart
+     */
+    function renderProgressTrendChart(tasks, period = 'weekly') {
+        const canvas = document.getElementById('progress-trend-chart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const project = Storage.getCurrentProject();
+
+        if (!project || !project.startDate || !project.endDate) {
+            drawEmptyChart(ctx, canvas, 'プロジェクト期間が設定されていません');
+            return;
+        }
+
+        const startDate = new Date(project.startDate);
+        const endDate = new Date(project.endDate);
+        const today = new Date();
+
+        // Find the latest actual end date among all tasks
+        let latestCompletionDate = null;
+        tasks.forEach(task => {
+            if (task.actualEndDate) {
+                const actualEnd = new Date(task.actualEndDate);
+                if (!latestCompletionDate || actualEnd > latestCompletionDate) {
+                    latestCompletionDate = actualEnd;
+                }
+            }
+        });
+
+        // Determine chart date range based on period
+        let chartStartDate, chartEndDate;
+        const allTasksCompleted = tasks.length > 0 && tasks.every(t => t.status === 'done');
+
+        if (allTasksCompleted && latestCompletionDate) {
+            // For completed projects, show up to the last completion date
+            chartEndDate = latestCompletionDate;
+            chartStartDate = startDate;
+        } else {
+            // For ongoing projects, adjust range based on period
+            switch (period) {
+                case 'daily-2weeks':
+                    // Show last 2 weeks (14 days)
+                    chartStartDate = new Date(today);
+                    chartStartDate.setDate(chartStartDate.getDate() - 14);
+                    chartEndDate = new Date(today);
+                    // Constrain to project boundaries
+                    if (chartStartDate < startDate) chartStartDate = startDate;
+                    if (chartEndDate > endDate) chartEndDate = endDate;
+                    break;
+                case 'daily':
+                    // Show last 30 days and next 30 days from today
+                    chartStartDate = new Date(today);
+                    chartStartDate.setDate(chartStartDate.getDate() - 30);
+                    chartEndDate = new Date(today);
+                    chartEndDate.setDate(chartEndDate.getDate() + 30);
+                    // Constrain to project boundaries
+                    if (chartStartDate < startDate) chartStartDate = startDate;
+                    if (chartEndDate > endDate) chartEndDate = endDate;
+                    break;
+                case 'weekly':
+                    // Show last 26 weeks and remaining project period
+                    chartStartDate = new Date(today);
+                    chartStartDate.setDate(chartStartDate.getDate() - (26 * 7));
+                    chartEndDate = endDate;
+                    // Constrain to project boundaries
+                    if (chartStartDate < startDate) chartStartDate = startDate;
+                    break;
+                case 'monthly':
+                default:
+                    // Show entire project period
+                    chartStartDate = startDate;
+                    chartEndDate = endDate;
+                    break;
+            }
+        }
+
+        // Generate time periods
+        // Normalize period for generateTimePeriods (daily-2weeks -> daily)
+        const normalizedPeriod = period.startsWith('daily') ? 'daily' : period;
+        const periods = generateTimePeriods(chartStartDate, chartEndDate, normalizedPeriod);
+
+        // Calculate progress for each period
+        const progressData = periods.map(periodDate => {
+            return calculateProgressAtDate(tasks, periodDate);
+        });
+
+        // Calculate planned progress (linear)
+        const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+        const plannedProgress = periods.map(periodDate => {
+            const daysPassed = Math.floor((periodDate - startDate) / (1000 * 60 * 60 * 24));
+            return Math.min(100, (daysPassed / totalDays) * 100);
+        });
+
+        // Destroy existing chart
+        if (canvas.chart) {
+            canvas.chart.destroy();
+        }
+
+        canvas.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: periods.map(date => formatPeriodLabel(date, normalizedPeriod)),
+                datasets: [
+                    {
+                        label: '実績進捗',
+                        data: progressData,
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '予定進捗',
+                        data: plannedProgress,
+                        borderColor: 'rgba(100, 116, 139, 0.5)',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '進捗率 (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: getPeriodAxisLabel(period)
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12 },
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Generate time periods array
+     */
+    function generateTimePeriods(startDate, endDate, period) {
+        const periods = [];
+        const current = new Date(startDate);
+
+        while (current <= endDate) {
+            periods.push(new Date(current));
+
+            switch (period) {
+                case 'daily':
+                    current.setDate(current.getDate() + 1);
+                    break;
+                case 'weekly':
+                    current.setDate(current.getDate() + 7);
+                    break;
+                case 'monthly':
+                    current.setMonth(current.getMonth() + 1);
+                    break;
+            }
+        }
+
+        // Ensure the end date is included in the periods if not already
+        if (periods.length > 0) {
+            const lastPeriod = periods[periods.length - 1];
+            if (lastPeriod < endDate) {
+                periods.push(new Date(endDate));
+            }
+        }
+
+        return periods;
+    }
+
+    /**
+     * Calculate progress at a specific date
+     */
+    function calculateProgressAtDate(tasks, date) {
+        if (tasks.length === 0) return 0;
+
+        const completedTasks = tasks.filter(task => {
+            if (!task.actualEndDate) return false;
+            const endDate = new Date(task.actualEndDate);
+            return endDate <= date;
+        });
+
+        return (completedTasks.length / tasks.length) * 100;
+    }
+
+    /**
+     * Format period label
+     */
+    function formatPeriodLabel(date, period) {
+        switch (period) {
+            case 'daily':
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            case 'weekly':
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            case 'monthly':
+                return `${date.getFullYear()}/${date.getMonth() + 1}`;
+            default:
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+    }
+
+    /**
+     * Get period axis label
+     */
+    function getPeriodAxisLabel(period) {
+        switch (period) {
+            case 'daily':
+                return '日付';
+            case 'weekly':
+                return '週';
+            case 'monthly':
+                return '月';
+            default:
+                return '期間';
+        }
+    }
+
+    /**
      * Render Burndown Chart
      */
-    function renderBurndownChart() {
+    function renderBurndownChart(scope = 'active', period = 'weekly') {
         const canvas = document.getElementById('burndown-chart');
         if (!canvas) return;
 
@@ -82,28 +367,81 @@ const ChartsRenderer = (() => {
         const sprints = WBSManager.getSprints();
         const tasks = WBSManager.getTasks();
 
-        // Find active sprint
-        const activeSprint = sprints.find(s => s.status === 'active');
-
-        if (!activeSprint || !activeSprint.startDate || !activeSprint.endDate) {
-            drawEmptyChart(ctx, canvas, 'アクティブなスプリントがありません');
-            return;
-        }
-
-        const sprintTasks = tasks.filter(t => t.sprintId === activeSprint.id);
-        if (sprintTasks.length === 0) {
-            drawEmptyChart(ctx, canvas, 'スプリントにタスクがありません');
-            return;
-        }
-
-        // Calculate data
-        const startDate = new Date(activeSprint.startDate);
-        const endDate = new Date(activeSprint.endDate);
+        let startDate, endDate, scopeTasks, scopeLabel;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-        const completedPoints = sprintTasks
+        if (scope === 'project') {
+            // Project-wide burndown
+            const project = Storage.getCurrentProject();
+            if (!project || !project.startDate || !project.endDate) {
+                drawEmptyChart(ctx, canvas, 'プロジェクト期間が設定されていません');
+                return;
+            }
+
+            const projectStartDate = new Date(project.startDate);
+            const projectEndDate = new Date(project.endDate);
+
+            // Adjust date range based on period
+            switch (period) {
+                case 'daily':
+                    // Show last 30 days and next 30 days from today
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 30);
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() + 30);
+                    // Constrain to project boundaries
+                    if (startDate < projectStartDate) startDate = projectStartDate;
+                    if (endDate > projectEndDate) endDate = projectEndDate;
+                    break;
+                case 'weekly':
+                    // Show last 26 weeks and remaining project period
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - (26 * 7));
+                    endDate = projectEndDate;
+                    // Constrain to project boundaries
+                    if (startDate < projectStartDate) startDate = projectStartDate;
+                    break;
+                case 'monthly':
+                default:
+                    // Show entire project period
+                    startDate = projectStartDate;
+                    endDate = projectEndDate;
+                    break;
+            }
+
+            scopeTasks = tasks;
+            scopeLabel = 'プロジェクト全体';
+
+            if (scopeTasks.length === 0) {
+                drawEmptyChart(ctx, canvas, 'タスクがありません');
+                return;
+            }
+        } else {
+            // Active sprint burndown
+            const activeSprint = sprints.find(s => s.status === 'active');
+
+            if (!activeSprint || !activeSprint.startDate || !activeSprint.endDate) {
+                drawEmptyChart(ctx, canvas, 'アクティブなスプリントがありません');
+                return;
+            }
+
+            startDate = new Date(activeSprint.startDate);
+            endDate = new Date(activeSprint.endDate);
+            scopeTasks = tasks.filter(t => t.sprintId === activeSprint.id);
+            scopeLabel = activeSprint.name || 'アクティブスプリント';
+
+            if (scopeTasks.length === 0) {
+                drawEmptyChart(ctx, canvas, 'スプリントにタスクがありません');
+                return;
+            }
+        }
+
+        // Calculate data
+        // today is already set above
+
+        const totalPoints = scopeTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+        const completedPoints = scopeTasks
             .filter(t => t.status === 'done')
             .reduce((sum, t) => sum + (t.storyPoints || 0), 0);
         const remainingPoints = totalPoints - completedPoints;
@@ -138,7 +476,7 @@ const ChartsRenderer = (() => {
         const actualY = padding + chartHeight * (1 - remainingPoints / totalPoints);
         const actualX = padding + (chartWidth * daysPassed / totalDays);
 
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#60a5fa';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(padding, padding);
@@ -146,7 +484,7 @@ const ChartsRenderer = (() => {
         ctx.stroke();
 
         // Draw point
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = '#60a5fa';
         ctx.beginPath();
         ctx.arc(actualX, actualY, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -179,7 +517,7 @@ const ChartsRenderer = (() => {
     /**
      * Render Burnup Chart
      */
-    function renderBurnupChart() {
+    function renderBurnupChart(scope = 'active', period = 'weekly') {
         const canvas = document.getElementById('burnup-chart');
         if (!canvas) return;
 
@@ -187,26 +525,80 @@ const ChartsRenderer = (() => {
         const sprints = WBSManager.getSprints();
         const tasks = WBSManager.getTasks();
 
-        const activeSprint = sprints.find(s => s.status === 'active');
-
-        if (!activeSprint || !activeSprint.startDate || !activeSprint.endDate) {
-            drawEmptyChart(ctx, canvas, 'アクティブなスプリントがありません');
-            return;
-        }
-
-        const sprintTasks = tasks.filter(t => t.sprintId === activeSprint.id);
-        if (sprintTasks.length === 0) {
-            drawEmptyChart(ctx, canvas, 'スプリントにタスクがありません');
-            return;
-        }
-
-        const startDate = new Date(activeSprint.startDate);
-        const endDate = new Date(activeSprint.endDate);
+        let startDate, endDate, scopeTasks, scopeLabel;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const totalPoints = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-        const completedPoints = sprintTasks
+        if (scope === 'project') {
+            // Project-wide burnup
+            const project = Storage.getCurrentProject();
+            if (!project || !project.startDate || !project.endDate) {
+                drawEmptyChart(ctx, canvas, 'プロジェクト期間が設定されていません');
+                return;
+            }
+
+            const projectStartDate = new Date(project.startDate);
+            const projectEndDate = new Date(project.endDate);
+
+            // Adjust date range based on period
+            switch (period) {
+                case 'daily':
+                    // Show last 30 days and next 30 days from today
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 30);
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() + 30);
+                    // Constrain to project boundaries
+                    if (startDate < projectStartDate) startDate = projectStartDate;
+                    if (endDate > projectEndDate) endDate = projectEndDate;
+                    break;
+                case 'weekly':
+                    // Show last 26 weeks and remaining project period
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - (26 * 7));
+                    endDate = projectEndDate;
+                    // Constrain to project boundaries
+                    if (startDate < projectStartDate) startDate = projectStartDate;
+                    break;
+                case 'monthly':
+                default:
+                    // Show entire project period
+                    startDate = projectStartDate;
+                    endDate = projectEndDate;
+                    break;
+            }
+
+            scopeTasks = tasks;
+            scopeLabel = 'プロジェクト全体';
+
+            if (scopeTasks.length === 0) {
+                drawEmptyChart(ctx, canvas, 'タスクがありません');
+                return;
+            }
+        } else {
+            // Active sprint burnup
+            const activeSprint = sprints.find(s => s.status === 'active');
+
+            if (!activeSprint || !activeSprint.startDate || !activeSprint.endDate) {
+                drawEmptyChart(ctx, canvas, 'アクティブなスプリントがありません');
+                return;
+            }
+
+            startDate = new Date(activeSprint.startDate);
+            endDate = new Date(activeSprint.endDate);
+            scopeTasks = tasks.filter(t => t.sprintId === activeSprint.id);
+            scopeLabel = activeSprint.name || 'アクティブスプリント';
+
+            if (scopeTasks.length === 0) {
+                drawEmptyChart(ctx, canvas, 'スプリントにタスクがありません');
+                return;
+            }
+        }
+
+        // today is already set above
+
+        const totalPoints = scopeTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+        const completedPoints = scopeTasks
             .filter(t => t.status === 'done')
             .reduce((sum, t) => sum + (t.storyPoints || 0), 0);
 
@@ -316,7 +708,7 @@ const ChartsRenderer = (() => {
             const x = padding + i * barWidth;
             const y = padding + chartHeight - barHeight;
 
-            ctx.fillStyle = '#3b82f6';
+            ctx.fillStyle = '#60a5fa';
             ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
 
             // Value label
@@ -372,8 +764,15 @@ const ChartsRenderer = (() => {
 
         const ctx = canvas.getContext('2d');
 
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        // Set canvas to square aspect ratio based on parent width
+        const parentWidth = canvas.parentElement.offsetWidth;
+        const size = Math.min(parentWidth, 400); // Max 400px for better display
+
+        // Force square dimensions via style
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        canvas.width = size;
+        canvas.height = size;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -391,8 +790,8 @@ const ChartsRenderer = (() => {
 
         const colors = {
             'todo': '#94a3b8',
-            'in_progress': '#3b82f6',
-            'done': '#22c55e'
+            'in_progress': '#60a5fa',
+            'done': '#86efac'
         };
 
         const labels = {
@@ -457,6 +856,7 @@ const ChartsRenderer = (() => {
 
         const ctx = canvas.getContext('2d');
 
+        // Set canvas to proper aspect ratio for bar chart
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
 
@@ -486,7 +886,7 @@ const ChartsRenderer = (() => {
             const barWidth = (count / maxCount) * chartWidth;
             const y = padding + i * barHeight;
 
-            ctx.fillStyle = '#3b82f6';
+            ctx.fillStyle = '#60a5fa';
             ctx.fillRect(padding, y + 5, barWidth, barHeight - 10);
 
             // Value
@@ -593,8 +993,8 @@ const ChartsRenderer = (() => {
         // Draw areas
         const colors = {
             todo: '#94a3b8',
-            inProgress: '#3b82f6',
-            done: '#22c55e'
+            inProgress: '#60a5fa',
+            done: '#86efac'
         };
 
         // Done area
@@ -755,8 +1155,19 @@ const ChartExpander = (() => {
 
         setTimeout(() => {
             const modalBody = canvas.parentElement;
-            canvas.width = modalBody.offsetWidth - 40;
-            canvas.height = modalBody.offsetHeight - 40;
+            let canvasWidth = modalBody.offsetWidth - 40;
+            let canvasHeight = modalBody.offsetHeight - 40;
+
+            // For circular charts (pie charts), maintain square aspect ratio
+            const circularCharts = ['status-chart', 'assignee-chart'];
+            if (circularCharts.includes(chartId)) {
+                const size = Math.min(canvasWidth, canvasHeight);
+                canvasWidth = size;
+                canvasHeight = size;
+            }
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
             const ctx = canvas.getContext('2d');
 
             // Temporarily replace canvas IDs for rendering

@@ -12,9 +12,9 @@ const KanbanBoard = (() => {
     // ステータス列の定義
     const COLUMNS = [
         { id: 'backlog', label: 'バックログ', icon: '📋', color: '#6c757d' },
-        { id: 'todo', label: 'TODO', icon: '📝', color: '#0d6efd' },
-        { id: 'in_progress', label: '進行中', icon: '🚀', color: '#fd7e14' },
-        { id: 'review', label: 'レビュー', icon: '👀', color: '#6f42c1' },
+        { id: 'todo', label: '未着手', icon: '📝', color: '#0d6efd' },
+        { id: 'in_progress', label: '着手中', icon: '🚀', color: '#fd7e14' },
+        { id: 'review', label: 'レビュー中', icon: '👀', color: '#6f42c1' },
         { id: 'done', label: '完了', icon: '✅', color: '#198754' }
     ];
 
